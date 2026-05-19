@@ -1,0 +1,98 @@
+{
+  "name": "mpl-smart-rack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MPL Smart Rack System — local WMS for Maldives Ports Limited",
+  "author": "MPL",
+  "main": "electron/dist/main.js",
+  "scripts": {
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "build:electron": "tsc -p electron/tsconfig.json",
+    "build:schema-sql": "cd server && npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/init.sql",
+    "build:all": "npm run build:schema-sql && npm run build:server && npm run build:client && npm run build:electron",
+    "dist": "npm run build:all && electron-builder --win portable",
+    "dist:installer": "npm run build:all && electron-builder --win nsis",
+    "electron:dev": "npm run build:electron && cross-env NODE_ENV=development electron ./electron/dist/main.js"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.9.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0"
+  },
+  "build": {
+    "appId": "mv.mpl.smartrack",
+    "productName": "MPL Smart Rack",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*",
+      "resources/**/*"
+    ],
+    "files": [
+      "electron/dist/**/*",
+      "node_modules/better-sqlite3/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "server/dist",
+        "to": "server/dist"
+      },
+      {
+        "from": "server/package.json",
+        "to": "server/package.json"
+      },
+      {
+        "from": "server/node_modules",
+        "to": "server/node_modules",
+        "filter": [
+          "**/*",
+          "!prisma/**",
+          "!@prisma/engines/**",
+          "!@prisma/fetch-engine/**",
+          "!@prisma/get-platform/**",
+          "!**/*.md",
+          "!**/*.map",
+          "!**/CHANGELOG*",
+          "!**/LICENSE*",
+          "!**/.bin/**"
+        ]
+      },
+      {
+        "from": "server/prisma",
+        "to": "server/prisma"
+      },
+      {
+        "from": "client/dist",
+        "to": "client/dist"
+      }
+    ],
+    "directories": {
+      "buildResources": "build-resources",
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "MPL-Smart-Rack-${version}-portable.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "MPL-Smart-Rack-${version}-setup.exe"
+    }
+  }
+}

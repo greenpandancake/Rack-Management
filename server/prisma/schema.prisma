@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model RackConfig {
+  id            Int      @id @default(1)
+  rows          String
+  levels        Int
+  slotsPerLevel Int
+  updatedAt     DateTime @updatedAt
+}
+
+model RackSlot {
+  id        String  @id
+  row       String
+  level     Int
+  slot      Int
+  isActive  Boolean @default(true)
+  cargos    Cargo[] @relation("CurrentSlot")
+  portions  CargoPortion[] @relation("PortionCurrentSlot")
+  movesFrom MoveLog[] @relation("FromSlot")
+  movesTo   MoveLog[] @relation("ToSlot")
+
+  @@index([row, level, slot])
+}
+
+model Cargo {
+  id                  String       @id @default(uuid())
+  cssCcdNo            String       @unique
+  vesselName          String
+  dateOfArrival       DateTime
+  containerNo         String
+  blNo                String
+  consigneeName       String
+  mark                String       @default("")
+  commodity           String       @default("GENERAL CARGO")
+  cargoDescription    String       @default("")
+  pkgsType            String
+  noOfPkgs            Int
+  cbm                 Float        @default(0)
+  fclLcl              String       @default("LCL")
+  containerSize       String       @default("NA")
+  detainedByCustoms   Boolean      @default(false)
+  detainedByHealth    Boolean      @default(false)
+  detainedCargoRefNo  String?
+  reasonOfShifting    String
+  clearanceOfficer    String
+  clearanceEmployId   String
+  shiftedDate         DateTime
+  remarks             String       @default("")
+  currentSlotId       String?
+  currentSlot         RackSlot?    @relation("CurrentSlot", fields: [currentSlotId], references: [id])
+  isOverdue           Boolean      @default(false)
+  status              String       @default("IN_RACK")
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  moveLogs            MoveLog[]
+  photos              CargoPhoto[]
+  reports             Report[]
+  portions            CargoPortion[]
+
+  @@index([containerNo])
+  @@index([blNo])
+  @@index([consigneeName])
+  @@index([currentSlotId])
+}
+
+model CargoPortion {
+  id            String    @id @default(uuid())
+  cargoId       String
+  cargo         Cargo     @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  label         String
+  quantity      Int
+  pkgsType      String
+  currentSlotId String?
+  currentSlot   RackSlot? @relation("PortionCurrentSlot", fields: [currentSlotId], references: [id])
+  status        String    @default("IN_RACK")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  moveLogs      MoveLog[]
+
+  @@index([cargoId])
+  @@index([currentSlotId])
+}
+
+model MoveLog {
+  id          String     @id @default(uuid())
+  cargoId     String
+  cargo       Cargo      @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  portionId   String?
+  portion     CargoPortion? @relation(fields: [portionId], references: [id], onDelete: Cascade)
+  fromSlotId  String?
+  fromSlot    RackSlot?  @relation("FromSlot", fields: [fromSlotId], references: [id])
+  toSlotId    String?
+  toSlot      RackSlot?  @relation("ToSlot", fields: [toSlotId], references: [id])
+  movedBy     String
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id])
+  movedAt     DateTime   @default(now())
+  source      String
+
+  @@index([cargoId])
+  @@index([portionId])
+  @@index([userId])
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  username           String    @unique
+  name               String
+  passwordHash       String
+  role               String    @default("CLERK")
+  isActive           Boolean   @default(true)
+  telegramUsername   String?   @unique
+  mustChangePassword Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  lastLoginAt        DateTime?
+  moveLogs           MoveLog[]
+
+  @@index([telegramUsername])
+}
+
+model CargoPhoto {
+  id         String    @id @default(uuid())
+  cargoId    String
+  cargo      Cargo     @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  filePath   String
+  caption    String?
+  uploadedBy String
+  uploadedAt DateTime  @default(now())
+  kind       String    @default("INTAKE")
+  reports    Report[]
+
+  @@index([cargoId])
+}
+
+model Report {
+  id          String      @id @default(uuid())
+  cargoId     String
+  cargo       Cargo       @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  note        String
+  reportedBy  String
+  reportedAt  DateTime    @default(now())
+  photoId     String?
+  photo       CargoPhoto? @relation(fields: [photoId], references: [id])
+
+  @@index([cargoId])
+}

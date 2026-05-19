@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+
+@layer base {
+  body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+  }
+
+  input, select, textarea {
+    @apply outline-none transition shadow-sm;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    @apply border-sky-500 ring-2 ring-sky-100;
+  }
+
+  table {
+    @apply border-separate border-spacing-0;
+  }
+}
+
+@layer components {
+  .app-surface {
+    @apply bg-white border border-slate-200 rounded-lg shadow-sm;
+  }
+
+  .app-panel {
+    @apply bg-white border border-slate-200 rounded-lg shadow-sm;
+  }
+
+  .app-muted-panel {
+    @apply bg-slate-50 border border-slate-200 rounded-lg;
+  }
+
+  .input {
+    @apply border border-slate-300 rounded-md px-3 py-2 w-full text-sm bg-white shadow-sm transition;
+  }
+
+  .btn-primary {
+    @apply bg-slate-900 text-white rounded-md px-4 py-2 text-sm font-medium shadow-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply border border-slate-300 bg-white text-slate-700 rounded-md px-3 py-2 text-sm font-medium shadow-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .metric-card {
+    @apply app-surface px-4 py-3;
+  }
+
+  .table-modern {
+    @apply w-full text-sm leading-5;
+  }
+
+  .table-modern thead {
+    @apply bg-slate-50 text-xs uppercase tracking-wide text-slate-500;
+  }
+
+  .table-modern th {
+    @apply text-left px-3 py-2 font-semibold border-b border-slate-200 whitespace-nowrap;
+  }
+
+  .table-modern td {
+    @apply px-3 py-2.5 border-b border-slate-100 align-middle text-slate-600;
+  }
+
+  .table-modern tbody tr {
+    @apply hover:bg-slate-50;
+  }
+
+  .text-value {
+    @apply font-medium text-slate-800;
+  }
+
+  .text-muted-value {
+    @apply text-slate-500;
+  }
+
+  .badge {
+    @apply inline-flex min-w-24 items-center justify-center rounded-md px-2.5 py-1 text-xs font-semibold leading-4;
+  }
+
+  .badge-green {
+    @apply bg-emerald-100 text-emerald-700;
+  }
+
+  .badge-blue {
+    @apply bg-sky-100 text-sky-700;
+  }
+
+  .badge-amber {
+    @apply bg-amber-100 text-amber-700;
+  }
+
+  .badge-slate {
+    @apply bg-slate-200 text-slate-700;
+  }
+
+  .badge-red {
+    @apply bg-red-100 text-red-700;
+  }
+}
