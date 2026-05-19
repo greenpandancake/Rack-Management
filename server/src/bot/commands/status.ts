@@ -4,11 +4,11 @@ import { bus } from '../../realtime/bus.js';
 import { resolveCargo } from '../resolveCargo.js';
 import { resolveTelegramUser } from '../user.js';
 
-const SLOT_FREEING = new Set(['IN_CHECKING_AREA', 'CLEARED', 'MARKED_FOR_DISPOSAL']);
+const SLOT_FREEING = new Set(['IN_CHECKING_AREA', 'CLEARED']);
 
 type StatusCmd = {
   command: string;
-  status: 'CHECKED_FOR_AUCTION' | 'IN_CHECKING_AREA' | 'CLEARED' | 'MARKED_FOR_DISPOSAL';
+  status: 'CHECKED_FOR_AUCTION' | 'IN_CHECKING_AREA' | 'CLEARED' | 'MARKED_FOR_DISPOSAL' | 'DAMAGED';
   label: string;
 };
 
@@ -16,7 +16,8 @@ const COMMANDS: StatusCmd[] = [
   { command: 'auction', status: 'CHECKED_FOR_AUCTION', label: 'checked for auction' },
   { command: 'checking', status: 'IN_CHECKING_AREA', label: 'moved to Checking Area' },
   { command: 'cleared', status: 'CLEARED', label: 'cleared (rack slot unassigned)' },
-  { command: 'disposal', status: 'MARKED_FOR_DISPOSAL', label: 'marked for disposal (rack slot unassigned)' },
+  { command: 'disposal', status: 'MARKED_FOR_DISPOSAL', label: 'marked for disposal' },
+  { command: 'damaged', status: 'DAMAGED', label: 'marked as damaged' },
 ];
 
 export function registerStatusCommands(bot: Telegraf) {

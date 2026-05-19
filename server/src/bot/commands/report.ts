@@ -2,7 +2,7 @@ import type { Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 import { prisma } from '../../db.js';
 import { bus } from '../../realtime/bus.js';
-import { resolveCargo } from '../resolveCargo.js';
+import { resolveCargoBySlotOrIdentifier } from '../resolveCargo.js';
 import { downloadTelegramPhoto } from '../photoHandler.js';
 import { resolveTelegramUser } from '../user.js';
 
@@ -49,13 +49,19 @@ export function registerReportCommand(bot: Telegraf) {
     const rest = text.replace(/^\/report(@\S+)?\s*/, '');
     const [identifier, ...noteParts] = rest.split(/\s+/);
     if (!identifier) {
-      return ctx.reply('Usage: /report <containerNo|cargoId> <note>. Then send a photo within 5 minutes.');
+      return ctx.reply('Usage: /report <containerNo|cargoId|slotId> <note>. Then send a photo within 5 minutes.');
     }
     const actor = await resolveTelegramUser(ctx);
     if (!actor) return ctx.reply('Your Telegram username is not linked to an active Smart Rack user.');
 
-    const cargo = await resolveCargo(identifier);
-    if (!cargo) return ctx.reply(`Cargo not found: ${identifier}`);
+    const resolved = await resolveCargoBySlotOrIdentifier(identifier);
+    if (resolved.kind === 'not_found') return ctx.reply(`Cargo not found: ${identifier}`);
+    if (resolved.kind === 'empty') return ctx.reply(`Slot ${resolved.slotId} is empty.`);
+    if (resolved.kind === 'ambiguous') {
+      const list = resolved.containers.map((c) => `  ${c}`).join('\n');
+      return ctx.reply(`Multiple cargo in slot ${resolved.slotId}. Specify by container number:\n${list}`);
+    }
+    const cargo = resolved.cargo;
 
     const note = noteParts.join(' ').trim();
 
@@ -79,9 +85,14 @@ export function registerReportCommand(bot: Telegraf) {
     if (reportCaption) {
       const actor = await resolveTelegramUser(ctx);
       if (!actor) return ctx.reply('Your Telegram username is not linked to an active Smart Rack user.');
-      const cargo = await resolveCargo(reportCaption[1]);
-      if (!cargo) return ctx.reply(`Cargo not found: ${reportCaption[1]}`);
-      cargoId = cargo.id;
+      const resolved = await resolveCargoBySlotOrIdentifier(reportCaption[1]);
+      if (resolved.kind === 'not_found') return ctx.reply(`Cargo not found: ${reportCaption[1]}`);
+      if (resolved.kind === 'empty') return ctx.reply(`Slot ${resolved.slotId} is empty.`);
+      if (resolved.kind === 'ambiguous') {
+        const list = resolved.containers.map((c) => `  ${c}`).join('\n');
+        return ctx.reply(`Multiple cargo in slot ${resolved.slotId}. Specify by container number:\n${list}`);
+      }
+      cargoId = resolved.cargo.id;
       note = (reportCaption[2] ?? '').trim();
       const saved = await downloadTelegramPhoto(ctx.telegram, fileId, cargoId, actor.displayName, 'CONDITION_REPORT', caption || null);
       await createReport({ cargoId, note, reportedBy: actor.displayName, photoId: saved.id });

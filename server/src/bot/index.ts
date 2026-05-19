@@ -4,6 +4,7 @@ import { registerMoveCommand } from './commands/move.js';
 import { registerReportCommand } from './commands/report.js';
 import { registerStatusCommands } from './commands/status.js';
 import { registerGetIdCommand } from './commands/getid.js';
+import { registerGetInfoCommand } from './commands/getinfo.js';
 
 export async function startBot() {
   const bot = new Telegraf(env.BOT_TOKEN);
@@ -21,12 +22,16 @@ export async function startBot() {
   bot.help((ctx) =>
     ctx.reply(
       [
-        '/getid <containerNo|blNo|consignee>      — look up the MCH/WH- ID for a cargo',
-        '/move <id|containerNo> <slotId>          — relocate to a rack slot',
-        '/checking <id|containerNo>               — move to Checking Area (frees slot)',
-        '/cleared <id|containerNo>                — mark cleared (frees slot)',
-        '/auction <id|containerNo>                — flag as checked for auction',
-        '/report <id|containerNo> <note>          — log a condition note; attach a photo within 5 min',
+        '/getinfo <slotId>                              — show cargo details stored in a rack slot',
+        '/getid <containerNo|blNo|cssCcdNo|consignee>   — look up the MCH/WH- ID for a cargo',
+        '/move <id|containerNo> <toSlot>                — relocate cargo to a rack slot',
+        '/move <fromSlot> <toSlot>                     — move whatever is in a slot to another slot',
+        '/checking <id|containerNo>                     — move to Checking Area (frees slot)',
+        '/cleared <id|containerNo>                      — mark cleared (frees slot)',
+        '/auction <id|containerNo>                      — flag as checked for auction',
+        '/disposal <id|containerNo>                     — mark for disposal',
+        '/damaged <id|containerNo>                      — mark as damaged',
+        '/report <id|containerNo|slotId> <note>         — log a condition note; attach a photo within 5 min',
       ].join('\n'),
     ),
   );
@@ -35,6 +40,7 @@ export async function startBot() {
   registerReportCommand(bot);
   registerStatusCommands(bot);
   registerGetIdCommand(bot);
+  registerGetInfoCommand(bot);
 
   await bot.launch();
   console.log('[bot] launched (polling)');
