@@ -10,7 +10,7 @@ html, body, #root { height: 100%; }
   }
 
   input, select, textarea {
-    @apply outline-none transition shadow-sm;
+    @apply outline-none transition shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-400;
   }
 
   input:focus, select:focus, textarea:focus {
