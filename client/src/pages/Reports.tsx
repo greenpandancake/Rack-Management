@@ -158,7 +158,7 @@ export function Reports() {
       <div className="flex items-center justify-between gap-3 flex-wrap print:hidden">
         <div>
           <h2 className="text-xl font-bold">Rack Reports</h2>
-          <p className="text-sm text-slate-600">Generate weekly, monthly, or custom rack activity reports.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Generate weekly, monthly, or custom rack activity reports.</p>
         </div>
         <div className="flex gap-2">
           <button disabled={!data} onClick={() => data && downloadCsv(data)} className="btn-secondary">CSV</button>
@@ -172,18 +172,18 @@ export function Reports() {
             <button
               key={p}
               onClick={() => setPresetRange(p)}
-              className={`px-3 py-1.5 text-sm rounded-md transition ${preset === p ? 'bg-slate-900 text-white shadow-sm' : 'border border-slate-300 bg-white hover:bg-slate-50'}`}
+              className={`px-3 py-1.5 text-sm rounded-md transition ${preset === p ? 'bg-slate-900 text-white shadow-sm' : 'border border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200'}`}
             >
               {p === 'week' ? 'Weekly' : p === 'month' ? 'Monthly' : 'Custom'}
             </button>
           ))}
         </div>
         <label className="block">
-          <span className="block text-xs font-semibold text-slate-600 mb-1">Start</span>
+          <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Start</span>
           <input type="date" className="input" value={start} onChange={(e) => { setPreset('custom'); setStart(e.target.value); }} />
         </label>
         <label className="block">
-          <span className="block text-xs font-semibold text-slate-600 mb-1">End</span>
+          <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">End</span>
           <input type="date" className="input" value={end} onChange={(e) => { setPreset('custom'); setEnd(e.target.value); }} />
         </label>
       </div>
@@ -191,7 +191,7 @@ export function Reports() {
       {isLoading ? (
         <div>Loading...</div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">{(error as Error).message}</div>
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm dark:bg-red-900/30 dark:border-red-700/50 dark:text-red-400">{(error as Error).message}</div>
       ) : data ? (
         <ReportView report={data} statusRows={statusRows} />
       ) : null}
@@ -210,7 +210,7 @@ function ReportView({
     <div className="space-y-5">
       <div className="app-panel p-6 space-y-1">
         <h1 className="text-2xl font-bold">MPL Smart Rack Report</h1>
-        <div className="text-sm text-slate-600">
+        <div className="text-sm text-slate-600 dark:text-slate-400">
           {shortDate(report.range.start)} to {shortDate(report.range.end)} - Generated {shortDateTime(report.generatedAt)}
         </div>
       </div>
@@ -253,7 +253,7 @@ function ReportView({
               <td className="whitespace-nowrap">{shortDate(c.createdAt)}</td>
               <td>{c.cssCcdNo}</td>
               <td>{cargoTypeLabel(c.containerNo)}</td>
-              <td className="font-mono text-xs text-slate-700">{c.blNo}</td>
+              <td className="font-mono text-xs text-slate-700 dark:text-slate-300">{c.blNo}</td>
               <td>{companyName(c.consigneeName)}</td>
               <td>{c.noOfPkgs}</td>
               <td>{Number(c.cbm).toFixed(3)}</td>
@@ -271,7 +271,7 @@ function ReportView({
             <tr key={m.id}>
               <td className="whitespace-nowrap">{shortDateTime(m.movedAt)}</td>
               <td>{cargoTypeLabel(m.cargo.containerNo)}</td>
-              <td className="font-mono text-xs text-slate-700">{m.cargo.blNo}</td>
+              <td className="font-mono text-xs text-slate-700 dark:text-slate-300">{m.cargo.blNo}</td>
               <td>{portionLabel(m.portion) || '-'}</td>
               <td>{m.fromSlotId ?? '-'}</td>
               <td>{m.toSlotId ?? '-'}</td>
@@ -289,7 +289,7 @@ function ReportView({
               <td className="whitespace-nowrap">{shortDateTime(c.updatedAt)}</td>
               <td>{c.cssCcdNo}</td>
               <td>{cargoTypeLabel(c.containerNo)}</td>
-              <td className="font-mono text-xs text-slate-700">{c.blNo}</td>
+              <td className="font-mono text-xs text-slate-700 dark:text-slate-300">{c.blNo}</td>
               <td>{companyName(c.consigneeName)}</td>
               <td>{STATUS_LABELS[c.status]}</td>
             </tr>
@@ -303,7 +303,7 @@ function ReportView({
             <tr key={r.id}>
               <td className="whitespace-nowrap">{shortDateTime(r.reportedAt)}</td>
               <td>{cargoTypeLabel(r.cargo.containerNo)}</td>
-              <td className="font-mono text-xs text-slate-700">{r.cargo.blNo}</td>
+              <td className="font-mono text-xs text-slate-700 dark:text-slate-300">{r.cargo.blNo}</td>
               <td>{r.reportedBy}</td>
               <td>{r.note}</td>
             </tr>
@@ -316,8 +316,8 @@ function ReportView({
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: 'red' }) {
   return (
-    <div className={`metric-card ${tone === 'red' ? 'border-red-200 text-red-700 bg-red-50' : ''}`}>
-      <div className="text-xs text-slate-500">{label}</div>
+    <div className={`metric-card ${tone === 'red' ? 'border-red-200 text-red-700 bg-red-50 dark:border-red-700/50 dark:text-red-400 dark:bg-red-900/30' : ''}`}>
+      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
       <div className="text-2xl font-bold">{Number.isInteger(value) ? value : value.toFixed(3)}</div>
     </div>
   );
@@ -337,12 +337,12 @@ function Table({ headers, children }: { headers: string[]; children: ReactNode }
   return (
     <div className="overflow-x-auto">
       <table className="table-modern">
-        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+        <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
           <tr>{headers.map((h) => <th key={h} className="text-left px-3 py-2">{h}</th>)}</tr>
         </thead>
         <tbody className="divide-y [&_td]:px-3 [&_td]:py-2">
           {Array.isArray(rows) && rows.length === 0 ? (
-            <tr><td colSpan={headers.length} className="text-slate-500">No records in this range.</td></tr>
+            <tr><td colSpan={headers.length} className="text-slate-500 dark:text-slate-400">No records in this range.</td></tr>
           ) : rows}
         </tbody>
       </table>

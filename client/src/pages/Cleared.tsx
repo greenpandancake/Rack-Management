@@ -128,9 +128,9 @@ export function Cleared() {
 
       {isSuperAdmin && (
         <div className="app-panel px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
             {selectedIds.size} selected
-            {deleteError && <span className="ml-3 text-red-600">{deleteError}</span>}
+            {deleteError && <span className="ml-3 text-red-600 dark:text-red-400">{deleteError}</span>}
           </div>
           <button
             type="button"
@@ -143,15 +143,15 @@ export function Cleared() {
         </div>
       )}
 
-      <div className="flex gap-1 border-b">
+      <div className="flex gap-1 border-b dark:border-slate-700">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t)}
             className={`px-3 py-1.5 text-sm border-b-2 -mb-px ${
               tab.key === t.key
-                ? 'border-slate-900 text-slate-900 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'border-slate-900 text-slate-900 font-semibold dark:border-slate-100 dark:text-slate-100'
+                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
             {t.label}
@@ -168,7 +168,7 @@ export function Cleared() {
       ) : (
         <div className="app-panel overflow-hidden">
           <table className="table-modern">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
               <tr>
                 {isSuperAdmin && (
                   <th className="text-left px-3 py-2 w-10">
@@ -206,7 +206,7 @@ export function Cleared() {
       )}
 
       {total > 0 && (
-        <div className="flex items-center justify-between text-xs text-slate-600">
+        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
           <span>
             {(page - 1) * PAGE_SIZE + 1}–{Math.min(total, page * PAGE_SIZE)} of {total}
           </span>
@@ -214,7 +214,7 @@ export function Cleared() {
             <button
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
-              className="border rounded px-2 py-1 hover:bg-slate-100 disabled:opacity-40"
+              className="border rounded px-2 py-1 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-600 dark:hover:bg-slate-700 dark:text-slate-300"
             >
               Prev
             </button>
@@ -222,7 +222,7 @@ export function Cleared() {
             <button
               disabled={page >= totalPages}
               onClick={() => setPage(page + 1)}
-              className="border rounded px-2 py-1 hover:bg-slate-100 disabled:opacity-40"
+              className="border rounded px-2 py-1 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-600 dark:hover:bg-slate-700 dark:text-slate-300"
             >
               Next
             </button>
@@ -245,18 +245,18 @@ function CargoRow({
   onToggle: () => void;
 }) {
   return (
-    <tr className="hover:bg-slate-50">
+    <tr className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
       {selectable && (
         <td className="px-3 py-2">
           <input type="checkbox" checked={selected} onChange={onToggle} aria-label={`Select ${cargo.cssCcdNo}`} />
         </td>
       )}
       <td className="px-3 py-2">
-        <Link to={`/cargo/${cargo.id}`} className="font-semibold text-slate-900 hover:underline">
+        <Link to={`/cargo/${cargo.id}`} className="font-semibold text-slate-900 hover:underline dark:text-slate-100">
           {cargoTypeLabel(cargo.containerNo)}
         </Link>
       </td>
-      <td className="font-mono text-xs text-slate-600">{cargo.blNo}</td>
+      <td className="font-mono text-xs text-slate-600 dark:text-slate-400">{cargo.blNo}</td>
       <td>{companyName(cargo.consigneeName)}</td>
       <td>{cargo.vesselName}</td>
       <td className="px-3 py-2">

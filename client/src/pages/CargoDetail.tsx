@@ -300,7 +300,7 @@ export function CargoDetail() {
             </span>
             <button
               onClick={() => setEditing((v) => !v)}
-              className="border rounded px-3 py-1 text-xs hover:bg-slate-100"
+              className="border rounded px-3 py-1 text-xs hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 dark:text-slate-300"
             >
               {editing ? 'Cancel edit' : 'Edit intake'}
             </button>
@@ -325,8 +325,8 @@ export function CargoDetail() {
           <KV k="Current Slot" v={hasPortions ? portionSlotSummary(portions) : cargo.currentSlotId ?? 'Rack slot unassigned'} />
           <KV k="Detained" v={[cargo.detainedByCustoms && 'Customs', cargo.detainedByHealth && 'Health'].filter(Boolean).join(', ') || 'No'} />
         </div>
-        {cargo.remarks && <div className="text-sm text-slate-700"><b>Remarks:</b> {cargo.remarks}</div>}
-        {cargo.reasonOfShifting && <div className="text-sm text-slate-700"><b>Reason:</b> {cargo.reasonOfShifting}</div>}
+        {cargo.remarks && <div className="text-sm text-slate-700 dark:text-slate-300"><b>Remarks:</b> {cargo.remarks}</div>}
+        {cargo.reasonOfShifting && <div className="text-sm text-slate-700 dark:text-slate-300"><b>Reason:</b> {cargo.reasonOfShifting}</div>}
       </div>
 
       {editing && (
@@ -348,13 +348,13 @@ export function CargoDetail() {
         <form onSubmit={handleMatchSubmit} className="app-panel p-6 space-y-5">
           <div>
             <h3 className="font-bold">Match / Merge Cargo Details</h3>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Fill the cargo details for this unidentified vessel intake item.
             </p>
           </div>
           <VesselCargoRowForm value={matchRow} onChange={(next) => { setMatchRow(next); setMatchMsg(null); }} />
           {(lookupLoading || lookupResults.length > 0) && (
-            <div className="border border-sky-200 rounded-lg bg-sky-50 p-3 space-y-2">
+            <div className="border border-sky-200 rounded-lg bg-sky-50 p-3 space-y-2 dark:border-sky-700/50 dark:bg-sky-900/30">
               <div className="text-xs font-semibold text-sky-700">
                 {lookupLoading ? 'Searching…' : `${lookupResults.length} match${lookupResults.length !== 1 ? 'es' : ''} found — click to auto-fill`}
               </div>
@@ -374,13 +374,13 @@ export function CargoDetail() {
                     });
                     setLookupResults([]);
                   }}
-                  className="w-full text-left rounded border border-sky-200 bg-white px-3 py-2 text-sm hover:border-sky-400 hover:bg-sky-100 transition"
+                  className="w-full text-left rounded border border-sky-200 bg-white px-3 py-2 text-sm hover:border-sky-400 hover:bg-sky-100 transition dark:border-sky-700 dark:bg-slate-700 dark:hover:bg-sky-900/40"
                 >
-                  <span className="font-semibold text-slate-800">{item.blNo}</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{item.blNo}</span>
                   <span className="mx-2 text-slate-400">·</span>
-                  <span className="text-slate-600">{companyName(item.consigneeName)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">{companyName(item.consigneeName)}</span>
                   {item.cargoDescription && (
-                    <span className="ml-2 text-xs text-slate-500">— {item.cargoDescription}</span>
+                    <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">— {item.cargoDescription}</span>
                   )}
                 </button>
               ))}
@@ -400,12 +400,12 @@ export function CargoDetail() {
         <h3 className="font-bold">Move</h3>
         {hasPortions ? (
           <div className="space-y-3">
-            <div className="text-sm text-slate-600">
+            <div className="text-sm text-slate-600 dark:text-slate-400">
               Package portions for this intake can be moved independently while staying under {cargo.cssCcdNo}.
             </div>
-            <div className="overflow-x-auto rounded border border-slate-200">
+            <div className="overflow-x-auto rounded border border-slate-200 dark:border-slate-700">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                   <tr>
                     <th className="px-3 py-2 text-left">Portion</th>
                     <th className="px-3 py-2 text-left">Packages</th>
@@ -416,7 +416,7 @@ export function CargoDetail() {
                 <tbody className="divide-y divide-slate-100">
                   {portions.map((portion) => (
                     <tr key={portion.id}>
-                      <td className="px-3 py-2 font-medium text-slate-800">{portion.label}</td>
+                      <td className="px-3 py-2 font-medium text-slate-800 dark:text-slate-200">{portion.label}</td>
                       <td className="px-3 py-2">{portion.quantity} x {portion.pkgsType}</td>
                       <td className="px-3 py-2">{portion.currentSlotId ?? 'Rack slot unassigned'}</td>
                       <td className="px-3 py-2 text-right">
@@ -435,7 +435,7 @@ export function CargoDetail() {
                           <button
                             disabled={busy}
                             onClick={() => handleDeletePortion(portion.id, portion.label)}
-                            className="rounded px-2.5 py-1 text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50"
+                            className="rounded px-2.5 py-1 text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50 dark:hover:bg-red-900/40"
                           >
                             Delete
                           </button>
@@ -449,8 +449,8 @@ export function CargoDetail() {
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm text-slate-600">
-              Current slot: <span className="font-semibold text-slate-900">{cargo.currentSlotId ?? 'Rack slot unassigned'}</span>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              Current slot: <span className="font-semibold text-slate-900 dark:text-slate-100">{cargo.currentSlotId ?? 'Rack slot unassigned'}</span>
             </div>
             <button
               disabled={busy}
@@ -467,7 +467,7 @@ export function CargoDetail() {
         )}
 
         <div className="border-t pt-3 space-y-2">
-          <div className="text-xs font-semibold text-slate-600">Status actions</div>
+          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Status actions</div>
           <div className="flex flex-wrap gap-2">
             <button
               disabled={busy}
@@ -517,18 +517,18 @@ export function CargoDetail() {
               </button>
             )}
           </div>
-          {statusMsg && <div className="text-xs text-slate-700">{statusMsg}</div>}
+          {statusMsg && <div className="text-xs text-slate-700 dark:text-slate-300">{statusMsg}</div>}
         </div>
 
         {cargo.noOfPkgs > 1 && !ARCHIVED_STATUSES.includes(cargo.status) && (
           <div className="border-t pt-3 space-y-3">
-            <div className="text-xs font-semibold text-slate-600">Split intake</div>
-            <p className="text-xs text-slate-500">
+            <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Split intake</div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Split this intake into package portions so each portion can be placed in a different rack slot while staying on this record.
             </p>
             <form onSubmit={handleSplit} className="flex flex-wrap items-end gap-3">
               <label className="block">
-                <span className="block text-xs font-semibold text-slate-600 mb-1">
+                <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
                   Packages to split off <span className="font-normal text-slate-400">(1 – {cargo.noOfPkgs - 1})</span>
                 </span>
                 <input
@@ -541,8 +541,8 @@ export function CargoDetail() {
                   required
                 />
               </label>
-              <div className="text-xs text-slate-500 pb-2">
-                Result: <span className="font-semibold text-slate-700">{splitQty} x {cargo.pkgsType}</span> new unassigned portion on this intake
+              <div className="text-xs text-slate-500 dark:text-slate-400 pb-2">
+                Result: <span className="font-semibold text-slate-700 dark:text-slate-300">{splitQty} x {cargo.pkgsType}</span> new unassigned portion on this intake
               </div>
               <button type="submit" disabled={busy || splitQty < 1 || splitQty >= cargo.noOfPkgs} className="btn-secondary pb-2 self-end">
                 {busy ? 'Splitting…' : 'Split'}
@@ -550,7 +550,7 @@ export function CargoDetail() {
             </form>
             {splitError && <div className="text-xs text-red-600">{splitError}</div>}
             {splitResult && (
-              <div className="rounded bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs text-emerald-800 space-y-1">
+              <div className="rounded bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs text-emerald-800 space-y-1 dark:bg-emerald-900/30 dark:border-emerald-700/50 dark:text-emerald-300">
                 <div>Split complete. <strong>{splitResult.split.label}</strong> has <strong>{splitResult.split.quantity} x {splitResult.split.pkgsType}</strong> and stays on this intake.</div>
               </div>
             )}
@@ -560,12 +560,12 @@ export function CargoDetail() {
 
       {movePickerOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/45 px-4 py-6">
-          <div className="mx-auto flex max-h-full max-w-6xl flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+          <div className="mx-auto flex max-h-full max-w-6xl flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
               <div>
                 <h3 className="font-bold">Move {movingPortion ? `${movingPortion.label} of ${cargoDisplayName(cargo.containerNo)}` : cargoDisplayName(cargo.containerNo)}</h3>
-                <div className="text-xs text-slate-500">
-                  Target: <span className="font-semibold text-slate-700">{selectedSlot?.id ?? 'Rack slot unassigned'}</span>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Target: <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedSlot?.id ?? 'Rack slot unassigned'}</span>
                 </div>
               </div>
               <button
@@ -589,7 +589,7 @@ export function CargoDetail() {
                 onSelect={setSlotTarget}
               />
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-700">
               <button
                 disabled={busy}
                 onClick={() => setSlotTarget('')}
@@ -616,7 +616,7 @@ export function CargoDetail() {
           {(cargo.photos ?? []).map((p) => (
             <a key={p.id} href={`/uploads/${p.filePath}`} target="_blank" rel="noreferrer" className="block">
               <img src={`/uploads/${p.filePath}`} alt={p.caption ?? ''} className="w-full h-32 object-cover rounded border" />
-              <div className="text-xs text-slate-500 mt-1">{p.kind} · {p.uploadedBy}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{p.kind} · {p.uploadedBy}</div>
             </a>
           ))}
         </div>
@@ -628,7 +628,7 @@ export function CargoDetail() {
           <ul className="text-sm divide-y">
             {cargo.reports.map((r) => (
               <li key={r.id} className="py-2">
-                <div className="flex justify-between text-xs text-slate-500">
+                <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>by {r.reportedBy}</span>
                   <span>{new Date(r.reportedAt).toLocaleString()}</span>
                 </div>
@@ -648,7 +648,7 @@ export function CargoDetail() {
           {(cargo.moveLogs ?? []).map((m) => (
             <li key={m.id} className="py-2 flex justify-between">
               <span>{m.fromSlot?.id ?? '—'} → {m.toSlot?.id ?? '—'}</span>
-              <span className="text-slate-500 text-xs">
+              <span className="text-slate-500 text-xs dark:text-slate-400">
                 {m.user ? `${m.user.name} (${m.user.username})` : m.movedBy} · {m.source} · {new Date(m.movedAt).toLocaleString()}
               </span>
             </li>
@@ -662,7 +662,7 @@ export function CargoDetail() {
 function KV({ k, v }: { k: string; v: string }) {
   return (
     <div>
-      <div className="text-xs text-slate-500">{k}</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400">{k}</div>
       <div className="font-medium">{v}</div>
     </div>
   );
@@ -723,7 +723,7 @@ function RackMoveMap({
   }, [slots]);
 
   if (slots.length === 0) {
-    return <div className="app-muted-panel p-4 text-sm text-slate-500">No active rack slots are available.</div>;
+    return <div className="app-muted-panel p-4 text-sm text-slate-500 dark:text-slate-400">No active rack slots are available.</div>;
   }
 
   return (
@@ -737,7 +737,7 @@ function RackMoveMap({
             <div className="space-y-2">
               {levelNos.map((level) => (
                 <div key={level} className="flex items-center gap-2">
-                  <div className="w-10 text-xs font-semibold text-slate-500 text-right">L{level}</div>
+                  <div className="w-10 text-xs font-semibold text-slate-500 dark:text-slate-400 text-right">L{level}</div>
                   <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: `repeat(${slotsPerLevel}, minmax(0, 1fr))` }}>
                     {(levels.get(level) ?? []).map((slot) => {
                       const cargoOccupants = slot.cargos.filter(
@@ -762,12 +762,12 @@ function RackMoveMap({
                           title={occupied ? `${occupantCount} active item(s) in slot` : 'Empty slot'}
                           className={`min-h-16 rounded-md border px-2 py-2 text-xs text-center shadow-sm transition ${
                             selected
-                              ? 'border-sky-500 bg-sky-100 text-sky-900 ring-2 ring-sky-200'
+                              ? 'border-sky-500 bg-sky-100 text-sky-900 ring-2 ring-sky-200 dark:bg-sky-900 dark:text-sky-100 dark:ring-sky-700'
                               : current
                                 ? 'border-slate-900 bg-slate-900 text-white'
                                 : occupied
-                                  ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                                  : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50'
+                                  ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
+                                  : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:border-sky-500 dark:hover:bg-sky-900/30'
                           }`}
                         >
                           <div className="font-semibold">{slot.id}</div>

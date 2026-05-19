@@ -34,7 +34,7 @@ export function RackGrid({ slots }: Props) {
               <div className="font-bold text-sm">Row {row}</div>
               <div className="text-xs text-slate-500">{levels.length} levels · {slotsPerLevel} slots/level</div>
             </div>
-            <div className="space-y-2 rounded-md bg-slate-50 border border-slate-200 p-3">
+            <div className="space-y-2 rounded-md bg-slate-50 border border-slate-200 p-3 dark:bg-slate-900 dark:border-slate-700">
               {levels.map((lvl) => (
                 <div key={lvl} className="flex items-center gap-2">
                   <div className="w-12 text-xs font-semibold text-slate-500 text-right">L{lvl}</div>

@@ -73,21 +73,21 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-full grid place-items-center bg-slate-100 px-4">
+    <main className="min-h-full grid place-items-center bg-slate-100 dark:bg-slate-950 px-4">
       <form onSubmit={submit} className="w-full max-w-sm app-panel p-6 space-y-4">
         <div>
           <h1 className="text-xl font-bold">MPL Smart Rack</h1>
-          <p className="text-sm text-slate-600 mt-1">Sign in to continue.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Sign in to continue.</p>
         </div>
         <label className="block">
-          <span className="block text-xs font-semibold text-slate-600 mb-1">Username</span>
+          <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Username</span>
           <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
         </label>
         <label className="block">
-          <span className="block text-xs font-semibold text-slate-600 mb-1">Password</span>
+          <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Password</span>
           <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
-        {error && <div className="text-sm text-red-600">{error}</div>}
+        {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}
         <button disabled={busy} className="btn-primary w-full">
           {busy ? 'Signing in...' : 'Sign in'}
         </button>
@@ -118,21 +118,21 @@ export function ChangePasswordPage() {
   }
 
   return (
-    <main className="min-h-full grid place-items-center bg-slate-100 px-4">
+    <main className="min-h-full grid place-items-center bg-slate-100 dark:bg-slate-950 px-4">
       <form onSubmit={submit} className="w-full max-w-sm app-panel p-6 space-y-4">
         <div>
           <h1 className="text-xl font-bold">Change password</h1>
-          <p className="text-sm text-slate-600 mt-1">Set a new password before using the system.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Set a new password before using the system.</p>
         </div>
         <label className="block">
-          <span className="block text-xs font-semibold text-slate-600 mb-1">Current password</span>
+          <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Current password</span>
           <input className="input" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoFocus />
         </label>
         <label className="block">
-          <span className="block text-xs font-semibold text-slate-600 mb-1">New password</span>
+          <span className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">New password</span>
           <input className="input" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
         </label>
-        {error && <div className="text-sm text-red-600">{error}</div>}
+        {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}
         <button disabled={busy} className="btn-primary w-full">
           {busy ? 'Saving...' : 'Save password'}
         </button>

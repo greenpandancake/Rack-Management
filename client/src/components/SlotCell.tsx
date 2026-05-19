@@ -58,7 +58,7 @@ export function SlotCell({ slot }: Props) {
 
   if (!slot.isActive) {
     return (
-      <div className="min-h-16 rounded-md border border-dashed border-slate-300 bg-white/60 text-slate-400 text-xs px-2 py-2 text-center">
+      <div className="min-h-16 rounded-md border border-dashed border-slate-300 bg-white/60 text-slate-400 text-xs px-2 py-2 text-center dark:border-slate-600 dark:bg-slate-800/60">
         <div className="font-semibold">{slot.id}</div>
         <div>disabled</div>
       </div>
@@ -67,7 +67,7 @@ export function SlotCell({ slot }: Props) {
 
   if (occupants.length === 0) {
     return (
-      <div className="min-h-16 rounded-md border border-slate-200 bg-white text-slate-500 text-xs px-2 py-2 text-center shadow-sm hover:border-sky-300 hover:bg-sky-50 transition">
+      <div className="min-h-16 rounded-md border border-slate-200 bg-white text-slate-500 text-xs px-2 py-2 text-center shadow-sm hover:border-sky-300 hover:bg-sky-50 transition dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:border-sky-500 dark:hover:bg-sky-900/30">
         <div className="font-semibold">{slot.id}</div>
         <div className="text-slate-400">empty</div>
       </div>
@@ -139,9 +139,9 @@ function MultiOccupantCell({ slot, occupants }: { slot: Slot; occupants: Occupan
       {open && (
         <div
           role="listbox"
-          className="absolute z-20 left-1/2 -translate-x-1/2 mt-1 w-64 max-w-[calc(100vw-1rem)] rounded-md border border-slate-200 bg-white shadow-lg text-left text-xs"
+          className="absolute z-20 left-1/2 -translate-x-1/2 mt-1 w-64 max-w-[calc(100vw-1rem)] rounded-md border border-slate-200 bg-white shadow-lg text-left text-xs dark:border-slate-700 dark:bg-slate-800"
         >
-          <div className="px-3 py-2 border-b border-slate-100 text-slate-500 font-semibold">
+          <div className="px-3 py-2 border-b border-slate-100 text-slate-500 font-semibold dark:border-slate-700 dark:text-slate-400">
             {occupants.length} cargos in {slot.id}
           </div>
           <ul className="max-h-72 overflow-auto py-1">
@@ -160,13 +160,13 @@ function MultiOccupantCell({ slot, occupants }: { slot: Slot; occupants: Occupan
                   <Link
                     to={`/cargo/${c.cargoId}`}
                     onClick={() => setOpen(false)}
-                    className="flex items-start gap-2 px-3 py-2 hover:bg-sky-50 transition"
+                    className="flex items-start gap-2 px-3 py-2 hover:bg-sky-50 transition dark:hover:bg-sky-900/30"
                   >
                     <span className={`mt-1 inline-block h-2 w-2 rounded-full ${dot} shrink-0`} />
                     <span className="min-w-0 flex-1">
-                      <span className="block font-semibold text-slate-900 truncate">{occupantLabel(c)}</span>
-                      <span className="block text-slate-500 truncate">{companyName(c.consigneeName)}</span>
-                      <span className="block text-[10px] text-slate-400">
+                      <span className="block font-semibold text-slate-900 truncate dark:text-slate-100">{occupantLabel(c)}</span>
+                      <span className="block text-slate-500 truncate dark:text-slate-400">{companyName(c.consigneeName)}</span>
+                      <span className="block text-[10px] text-slate-400 dark:text-slate-500">
                         BL {c.blNo}
                         {c.quantity != null && ` · ${c.quantity} x ${c.pkgsType}`}
                         {auction && ' · AUCTION'}

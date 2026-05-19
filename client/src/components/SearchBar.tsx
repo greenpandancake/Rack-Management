@@ -22,7 +22,7 @@ export function SearchBar({ value, onChange, placeholder }: Props) {
   return (
     <input
       type="search"
-      className="border border-slate-300 rounded-md px-3 py-2 text-sm w-full md:w-80 bg-white shadow-sm"
+      className="border border-slate-300 rounded-md px-3 py-2 text-sm w-full md:w-80 bg-white shadow-sm dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-400"
       placeholder={placeholder ?? 'Search container, BL, consignee…'}
       value={local}
       onChange={(e) => setLocal(e.target.value)}
