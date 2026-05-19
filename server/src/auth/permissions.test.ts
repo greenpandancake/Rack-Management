@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { resolvePermissions, ROLE_DEFAULTS } from './permissions.js';
+import { resolvePermissions } from './permissions.js';
 
 // SUPER_ADMIN gets all permissions regardless of stored overrides
 const superAdmin = resolvePermissions({ role: 'SUPER_ADMIN', permissions: null });
