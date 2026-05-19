@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../db.js';
 import { bus } from '../realtime/bus.js';
 import { ensureSlotsForConfig, enumerateSlots, parseRows } from '../services/rack.js';
-import { requireAuth, requireSuperAdmin } from '../middleware/auth.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
 
 export const configRouter = Router();
 configRouter.use(requireAuth);
@@ -20,7 +20,7 @@ const putSchema = z.object({
   slotsPerLevel: z.number().int().positive().max(50),
 });
 
-configRouter.put('/', requireSuperAdmin, async (req, res) => {
+configRouter.put('/', requirePermission('canConfigureRack'), async (req, res) => {
   const parsed = putSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const data = { ...parsed.data, rows: JSON.stringify(parsed.data.rows) };
@@ -65,7 +65,7 @@ configRouter.put('/', requireSuperAdmin, async (req, res) => {
   });
 });
 
-configRouter.delete('/rows/:row', requireSuperAdmin, async (req, res) => {
+configRouter.delete('/rows/:row', requirePermission('canConfigureRack'), async (req, res) => {
   const row = req.params.row.toUpperCase();
   const cfg = await prisma.rackConfig.findUnique({ where: { id: 1 } });
   if (!cfg) return res.status(404).json({ error: 'config_not_found' });

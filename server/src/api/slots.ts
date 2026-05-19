@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db.js';
 import { bus } from '../realtime/bus.js';
-import { requireAuth, requireSuperAdmin } from '../middleware/auth.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
 
 export const slotsRouter = Router();
 slotsRouter.use(requireAuth);
@@ -29,7 +29,7 @@ slotsRouter.get('/', async (_req, res) => {
 
 const patchSchema = z.object({ isActive: z.boolean() });
 
-slotsRouter.patch('/:id', requireSuperAdmin, async (req, res) => {
+slotsRouter.patch('/:id', requirePermission('canManageSlots'), async (req, res) => {
   const parsed = patchSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const slot = await prisma.rackSlot.update({ where: { id: req.params.id }, data: parsed.data });
@@ -37,7 +37,7 @@ slotsRouter.patch('/:id', requireSuperAdmin, async (req, res) => {
   res.json(slot);
 });
 
-slotsRouter.delete('/:id', requireSuperAdmin, async (req, res) => {
+slotsRouter.delete('/:id', requirePermission('canManageSlots'), async (req, res) => {
   const slot = await prisma.rackSlot.findUnique({ where: { id: req.params.id } });
   if (!slot) return res.status(404).json({ error: 'not_found' });
   const [cargoOccupants, portionOccupants] = await prisma.$transaction([
