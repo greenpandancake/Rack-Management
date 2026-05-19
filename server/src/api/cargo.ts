@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import multer from 'multer';
 import { prisma } from '../db.js';
 import { bus } from '../realtime/bus.js';
-import { requireAuth, requireSuperAdmin } from '../middleware/auth.js';
+import { requireAuth, requireSuperAdmin, requirePermission } from '../middleware/auth.js';
 import { parseManifestBuffer } from '../services/vesselManifest.js';
 
 export const cargoRouter = Router();
@@ -689,7 +689,7 @@ cargoRouter.delete('/:id/portions/:portionId', async (req, res) => {
   res.json({ ok: true });
 });
 
-cargoRouter.post('/:id/portions/:portionId/move', async (req, res) => {
+cargoRouter.post('/:id/portions/:portionId/move', requirePermission('canMoveCargo'), async (req, res) => {
   const parsed = moveSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { toSlotId } = parsed.data;
@@ -752,7 +752,7 @@ cargoRouter.post('/', async (req, res) => {
   return res.status(500).json({ error: 'id_generation_failed' });
 });
 
-cargoRouter.post('/:id/move', async (req, res) => {
+cargoRouter.post('/:id/move', requirePermission('canMoveCargo'), async (req, res) => {
   const parsed = moveSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { toSlotId } = parsed.data;
@@ -815,7 +815,7 @@ const statusSchema = z.object({
   movedBy: z.string().default('office'),
 });
 
-cargoRouter.post('/:id/status', async (req, res) => {
+cargoRouter.post('/:id/status', requirePermission('canChangeCargoStatus'), async (req, res) => {
   const parsed = statusSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { status } = parsed.data;
