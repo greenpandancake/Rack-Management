@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../db.js';
-import { requireAdmin, requireAuth, requireSuperAdmin } from '../middleware/auth.js';
+import { requireAdmin, requireAuth, requireSuperAdmin, requirePermission } from '../middleware/auth.js';
 import { resolvePermissions } from '../auth/permissions.js';
 
 export const authRouter = Router();
@@ -98,7 +98,7 @@ authRouter.post('/change-password', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-authRouter.get('/users', requireAdmin, async (_req, res) => {
+authRouter.get('/users', requirePermission('canViewSettings'), async (_req, res) => {
   const users = await prisma.user.findMany({
     orderBy: [{ role: 'asc' }, { username: 'asc' }],
     select: USER_SELECT,
@@ -121,7 +121,7 @@ function normalizeTelegramUsername(value: string | null | undefined) {
   return trimmed ? trimmed : null;
 }
 
-authRouter.post('/users', requireAdmin, async (req, res) => {
+authRouter.post('/users', requirePermission('canCreateUsers'), async (req, res) => {
   const parsed = userSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   if (parsed.data.role === 'SUPER_ADMIN' && req.session.user?.role !== 'SUPER_ADMIN') {
@@ -152,7 +152,7 @@ const patchUserSchema = z.object({
   mustChangePassword: z.boolean().optional(),
 });
 
-authRouter.patch('/users/:id', requireAdmin, async (req, res) => {
+authRouter.patch('/users/:id', requirePermission('canEditUsers'), async (req, res) => {
   const parsed = patchUserSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   if (parsed.data.role === 'SUPER_ADMIN' && req.session.user?.role !== 'SUPER_ADMIN') {
@@ -218,7 +218,7 @@ const permissionsBodySchema = z.object({
   canManageSlots: z.boolean().optional(),
 }).nullable();
 
-authRouter.post('/users/:id/password', requireAdmin, async (req, res) => {
+authRouter.post('/users/:id/password', requirePermission('canResetPasswords'), async (req, res) => {
   const parsed = resetPasswordSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
