@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { prisma } from '../db.js';
 import { bus } from '../realtime/bus.js';
 import { env } from '../env.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
 
 export const photosRouter = Router();
 photosRouter.use(requireAuth);
@@ -33,7 +33,7 @@ const upload = multer({
   },
 });
 
-photosRouter.post('/cargo/:cargoId', upload.single('photo'), async (req, res) => {
+photosRouter.post('/cargo/:cargoId', requirePermission('canUploadPhotos'), upload.single('photo'), async (req, res) => {
   const cargoId = req.params.cargoId;
   if (!UUID_RE.test(cargoId)) return res.status(400).json({ error: 'invalid_cargo_id' });
   if (!req.file) return res.status(400).json({ error: 'no_file_or_unsupported_type' });
