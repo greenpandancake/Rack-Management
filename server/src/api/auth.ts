@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../db.js';
-import { requireAdmin, requireAuth } from '../middleware/auth.js';
+import { requireAdmin, requireAuth, requireSuperAdmin } from '../middleware/auth.js';
 import { resolvePermissions } from '../auth/permissions.js';
 
 export const authRouter = Router();
@@ -18,6 +18,7 @@ const USER_SELECT = {
   createdAt: true,
   updatedAt: true,
   lastLoginAt: true,
+  permissions: true,
 } as const;
 
 const loginSchema = z.object({
@@ -183,13 +184,12 @@ authRouter.patch('/users/:id', requireAdmin, async (req, res) => {
     select: USER_SELECT,
   });
   if (req.session.user?.id === user.id) {
-    const fresh = await prisma.user.findUnique({ where: { id: user.id } });
     req.session.user = {
       id: user.id,
       username: user.username,
       name: user.name,
       role: toSessionRole(user.role),
-      permissions: resolvePermissions({ role: user.role, permissions: fresh?.permissions ? JSON.parse(fresh.permissions as string) : null }),
+      permissions: resolvePermissions({ role: user.role, permissions: user.permissions ? JSON.parse(user.permissions as string) : null }),
     };
   }
   res.json(user);
@@ -200,6 +200,24 @@ const resetPasswordSchema = z.object({
   mustChangePassword: z.boolean().default(true),
 });
 
+const permissionsBodySchema = z.object({
+  canViewDashboard: z.boolean().optional(),
+  canViewIntake: z.boolean().optional(),
+  canViewVesselIntake: z.boolean().optional(),
+  canViewCleared: z.boolean().optional(),
+  canViewReports: z.boolean().optional(),
+  canViewSettings: z.boolean().optional(),
+  canMoveCargo: z.boolean().optional(),
+  canChangeCargoStatus: z.boolean().optional(),
+  canUploadPhotos: z.boolean().optional(),
+  canAddFieldReports: z.boolean().optional(),
+  canCreateUsers: z.boolean().optional(),
+  canEditUsers: z.boolean().optional(),
+  canResetPasswords: z.boolean().optional(),
+  canConfigureRack: z.boolean().optional(),
+  canManageSlots: z.boolean().optional(),
+}).nullable();
+
 authRouter.post('/users/:id/password', requireAdmin, async (req, res) => {
   const parsed = resetPasswordSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
@@ -209,4 +227,25 @@ authRouter.post('/users/:id/password', requireAdmin, async (req, res) => {
     data: { passwordHash, mustChangePassword: parsed.data.mustChangePassword },
   });
   res.json({ ok: true });
+});
+
+authRouter.patch('/users/:id/permissions', requireSuperAdmin, async (req, res) => {
+  const parsed = permissionsBodySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'invalid_input' });
+
+  const target = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: { role: true },
+  });
+  if (!target) return res.status(404).json({ error: 'not_found' });
+  if (target.role === 'SUPER_ADMIN') {
+    return res.status(403).json({ error: 'super_admin_immutable' });
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { permissions: parsed.data ? JSON.stringify(parsed.data) : null },
+    select: { ...USER_SELECT, permissions: true },
+  });
+  res.json(user);
 });
