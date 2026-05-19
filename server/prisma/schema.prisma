@@ -121,6 +121,7 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   lastLoginAt        DateTime?
+  permissions        String?
   moveLogs           MoveLog[]
 
   @@index([telegramUsername])
