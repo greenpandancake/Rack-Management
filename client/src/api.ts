@@ -1,3 +1,52 @@
+export type UserPermissions = {
+  canViewDashboard: boolean;
+  canViewIntake: boolean;
+  canViewVesselIntake: boolean;
+  canViewCleared: boolean;
+  canViewReports: boolean;
+  canViewSettings: boolean;
+  canMoveCargo: boolean;
+  canChangeCargoStatus: boolean;
+  canUploadPhotos: boolean;
+  canAddFieldReports: boolean;
+  canCreateUsers: boolean;
+  canEditUsers: boolean;
+  canResetPasswords: boolean;
+  canConfigureRack: boolean;
+  canManageSlots: boolean;
+};
+
+export const ROLE_PERMISSION_DEFAULTS: Record<string, UserPermissions> = {
+  SUPER_ADMIN: {
+    canViewDashboard: true, canViewIntake: true, canViewVesselIntake: true,
+    canViewCleared: true, canViewReports: true, canViewSettings: true,
+    canMoveCargo: true, canChangeCargoStatus: true, canUploadPhotos: true,
+    canAddFieldReports: true, canCreateUsers: true, canEditUsers: true,
+    canResetPasswords: true, canConfigureRack: true, canManageSlots: true,
+  },
+  ADMIN: {
+    canViewDashboard: true, canViewIntake: true, canViewVesselIntake: true,
+    canViewCleared: true, canViewReports: true, canViewSettings: true,
+    canMoveCargo: true, canChangeCargoStatus: true, canUploadPhotos: true,
+    canAddFieldReports: true, canCreateUsers: true, canEditUsers: true,
+    canResetPasswords: true, canConfigureRack: false, canManageSlots: false,
+  },
+  CLERK: {
+    canViewDashboard: true, canViewIntake: true, canViewVesselIntake: true,
+    canViewCleared: true, canViewReports: true, canViewSettings: false,
+    canMoveCargo: true, canChangeCargoStatus: true, canUploadPhotos: true,
+    canAddFieldReports: true, canCreateUsers: false, canEditUsers: false,
+    canResetPasswords: false, canConfigureRack: false, canManageSlots: false,
+  },
+};
+
+export function resolveClientPermissions(user: { role: string; permissions: UserPermissions | null }): UserPermissions {
+  if (user.role === 'SUPER_ADMIN') return { ...ROLE_PERMISSION_DEFAULTS['SUPER_ADMIN'] };
+  const defaults = ROLE_PERMISSION_DEFAULTS[user.role] ?? ROLE_PERMISSION_DEFAULTS['CLERK'];
+  if (!user.permissions) return { ...defaults };
+  return { ...defaults, ...user.permissions };
+}
+
 export type CargoStatus =
   | 'IN_RACK'
   | 'CHECKED_FOR_AUCTION'
@@ -107,15 +156,21 @@ export type AuthUser = {
   username: string;
   name: string;
   role: 'SUPER_ADMIN' | 'ADMIN' | 'CLERK';
+  permissions: UserPermissions;
 };
 
-export type AdminUser = AuthUser & {
+export type AdminUser = {
+  id: string;
+  username: string;
+  name: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'CLERK';
   isActive: boolean;
   telegramUsername: string | null;
   mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;
   lastLoginAt: string | null;
+  permissions: UserPermissions | null;
 };
 
 export type RackReport = {
@@ -249,6 +304,11 @@ export const api = {
     http<{ ok: true }>(`/api/auth/users/${id}/password`, {
       method: 'POST',
       body: JSON.stringify({ password, mustChangePassword }),
+    }),
+  updateUserPermissions: (id: string, permissions: UserPermissions | null) =>
+    http<AdminUser>(`/api/auth/users/${id}/permissions`, {
+      method: 'PATCH',
+      body: JSON.stringify(permissions),
     }),
   slots: () => http<Slot[]>('/api/slots'),
   config: () => http<RackConfig | null>('/api/config'),
