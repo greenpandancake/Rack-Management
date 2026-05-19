@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AdminUser, api, Slot } from '../api.js';
 import { useAuth } from '../auth.js';
 import { activeSlotOccupants } from '../components/SlotCell.js';
+import { UserPermissionsModal } from '../components/UserPermissionsModal.js';
 
 export function Settings() {
   const auth = useAuth();
@@ -24,6 +25,7 @@ export function Settings() {
     telegramUsername: '',
   });
   const isSuperAdmin = auth.user?.role === 'SUPER_ADMIN';
+  const [permissionsUser, setPermissionsUser] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     if (cfg) {
@@ -263,7 +265,10 @@ export function Settings() {
                     </button>
                   </td>
                   <td className="py-2 pr-3 text-xs text-slate-500 dark:text-slate-400">{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '-'}</td>
-                  <td className="py-2 pr-3 text-right">
+                  <td className="py-2 pr-3 text-right space-x-2">
+                    {isSuperAdmin && u.role !== 'SUPER_ADMIN' && (
+                      <button onClick={() => setPermissionsUser(u)} className="border rounded px-2 py-1 text-xs hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 dark:text-slate-300">Permissions</button>
+                    )}
                     <button disabled={busy} onClick={() => resetPassword(u)} className="border rounded px-2 py-1 text-xs hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700 dark:text-slate-300">Reset password</button>
                   </td>
                 </tr>
@@ -369,6 +374,13 @@ export function Settings() {
         );
         })}
       </div>}
+
+      {permissionsUser && (
+        <UserPermissionsModal
+          user={permissionsUser}
+          onClose={() => setPermissionsUser(null)}
+        />
+      )}
     </div>
   );
 }
