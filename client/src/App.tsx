@@ -8,6 +8,7 @@ import { Reports } from './pages/Reports.js';
 import { VesselIntake } from './pages/VesselIntake.js';
 import { useSocketBridge } from './hooks/useSocket.js';
 import { useTheme } from './hooks/useTheme.js';
+import { usePermission } from './hooks/usePermission.js';
 import { ChangePasswordPage, LoginPage, useAuth } from './auth.js';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -17,15 +18,28 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100'
   }`;
 
+function NoAccess() {
+  return (
+    <main className="min-h-full grid place-items-center text-sm text-slate-600 dark:text-slate-400">
+      You don't have access to this page. Contact your administrator.
+    </main>
+  );
+}
+
 export function App() {
   useSocketBridge();
   const auth = useAuth();
   const { theme, toggle } = useTheme();
+  const canViewDashboard = usePermission('canViewDashboard');
+  const canViewIntake = usePermission('canViewIntake');
+  const canViewVesselIntake = usePermission('canViewVesselIntake');
+  const canViewCleared = usePermission('canViewCleared');
+  const canViewReports = usePermission('canViewReports');
+  const canViewSettings = usePermission('canViewSettings');
 
   if (auth.loading) return <div className="min-h-full grid place-items-center text-sm text-slate-600 dark:text-slate-400">Loading...</div>;
   if (!auth.user) return <LoginPage />;
   if (auth.mustChangePassword) return <ChangePasswordPage />;
-  const isAdmin = auth.user.role === 'SUPER_ADMIN' || auth.user.role === 'ADMIN';
 
   return (
     <div className="min-h-full flex flex-col bg-slate-100 dark:bg-slate-950">
@@ -39,12 +53,12 @@ export function App() {
             </span>
           </Link>
           <nav className="flex gap-1 ml-auto text-sm items-center">
-            <NavLink to="/" end className={linkClass}>Dashboard</NavLink>
-            <NavLink to="/intake" className={linkClass}>CFS intake</NavLink>
-            <NavLink to="/vessel-intake" className={linkClass}>Vessel Intake</NavLink>
-            <NavLink to="/cleared" className={linkClass}>Intakes</NavLink>
-            <NavLink to="/reports" className={linkClass}>Reports</NavLink>
-            {isAdmin && <NavLink to="/settings" className={linkClass}>Settings</NavLink>}
+            {canViewDashboard && <NavLink to="/" end className={linkClass}>Dashboard</NavLink>}
+            {canViewIntake && <NavLink to="/intake" className={linkClass}>CFS intake</NavLink>}
+            {canViewVesselIntake && <NavLink to="/vessel-intake" className={linkClass}>Vessel Intake</NavLink>}
+            {canViewCleared && <NavLink to="/cleared" className={linkClass}>Intakes</NavLink>}
+            {canViewReports && <NavLink to="/reports" className={linkClass}>Reports</NavLink>}
+            {canViewSettings && <NavLink to="/settings" className={linkClass}>Settings</NavLink>}
             <button
               onClick={toggle}
               aria-label="Toggle dark mode"
@@ -60,13 +74,13 @@ export function App() {
       </header>
       <main className="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/intake" element={<Intake />} />
-          <Route path="/vessel-intake" element={<VesselIntake />} />
+          <Route path="/" element={canViewDashboard ? <Dashboard /> : <NoAccess />} />
+          <Route path="/intake" element={canViewIntake ? <Intake /> : <NoAccess />} />
+          <Route path="/vessel-intake" element={canViewVesselIntake ? <VesselIntake /> : <NoAccess />} />
           <Route path="/cargo/:id" element={<CargoDetail />} />
-          <Route path="/cleared" element={<Cleared />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={isAdmin ? <Settings /> : <Navigate to="/" replace />} />
+          <Route path="/cleared" element={canViewCleared ? <Cleared /> : <NoAccess />} />
+          <Route path="/reports" element={canViewReports ? <Reports /> : <NoAccess />} />
+          <Route path="/settings" element={canViewSettings ? <Settings /> : <Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>
