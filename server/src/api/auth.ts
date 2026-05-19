@@ -3,6 +3,7 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../db.js';
 import { requireAdmin, requireAuth } from '../middleware/auth.js';
+import { resolvePermissions } from '../auth/permissions.js';
 
 export const authRouter = Router();
 
@@ -45,6 +46,7 @@ authRouter.post('/login', async (req, res) => {
     username: user.username,
     name: user.name,
     role: toSessionRole(user.role),
+    permissions: resolvePermissions({ role: user.role, permissions: user.permissions ? JSON.parse(user.permissions as string) : null }),
   };
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
@@ -68,6 +70,7 @@ authRouter.get('/me', async (req, res) => {
     req.session.destroy(() => {});
     return res.json({ user: null });
   }
+  req.session.user.permissions = resolvePermissions({ role: user.role, permissions: user.permissions ? JSON.parse(user.permissions as string) : null });
   res.json({
     user: req.session.user,
     mustChangePassword: user.mustChangePassword,
@@ -180,11 +183,13 @@ authRouter.patch('/users/:id', requireAdmin, async (req, res) => {
     select: USER_SELECT,
   });
   if (req.session.user?.id === user.id) {
+    const fresh = await prisma.user.findUnique({ where: { id: user.id } });
     req.session.user = {
       id: user.id,
       username: user.username,
       name: user.name,
       role: toSessionRole(user.role),
+      permissions: resolvePermissions({ role: user.role, permissions: fresh?.permissions ? JSON.parse(fresh.permissions as string) : null }),
     };
   }
   res.json(user);
