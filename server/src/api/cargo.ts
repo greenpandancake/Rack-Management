@@ -420,6 +420,25 @@ cargoRouter.delete('/bulk', requireSuperAdmin, async (req, res) => {
   res.json({ deleted: result.count });
 });
 
+async function findDuplicateBLs(
+  vesselName: string,
+  arrivalDate: Date,
+  blNos: string[],
+): Promise<{ blNo: string; cssCcdNo: string; consigneeName: string }[]> {
+  if (blNos.length === 0) return [];
+  const arrivalDateStr = arrivalDate.toISOString().slice(0, 10);
+  const existing = await prisma.cargo.findMany({
+    where: {
+      vesselName: normalizeVesselName(vesselName),
+      dateOfArrival: arrivalDateRange(arrivalDateStr),
+      blNo: { in: blNos },
+      status: { not: 'CLEARED' },
+    },
+    select: { blNo: true, cssCcdNo: true, consigneeName: true },
+  });
+  return existing;
+}
+
 function groupManifestRowsByBL(rows: z.infer<typeof vesselRowSchema>[]): z.infer<typeof vesselRowSchema>[] {
   const groups = new Map<string, z.infer<typeof vesselRowSchema>[]>();
   for (const row of rows) {
@@ -444,6 +463,14 @@ cargoRouter.post('/vessel-bulk', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const data = parsed.data;
   const mergedRows = groupManifestRowsByBL(data.rows);
+  const duplicates = await findDuplicateBLs(
+    data.vesselName,
+    data.arrivalDate,
+    mergedRows.map((r) => r.manifestRef),
+  );
+  if (duplicates.length > 0) {
+    return res.status(409).json({ error: 'duplicate_manifest_entries', duplicates });
+  }
   const MAX_RETRIES = 5;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
@@ -494,6 +521,10 @@ cargoRouter.post('/vessel-manual-detail', async (req, res) => {
   const parsed = vesselManualDetailSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const data = parsed.data;
+  const duplicates = await findDuplicateBLs(data.vesselName, data.arrivalDate, [data.row.manifestRef]);
+  if (duplicates.length > 0) {
+    return res.status(409).json({ error: 'duplicate_manifest_entries', duplicates });
+  }
   const MAX_RETRIES = 5;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {

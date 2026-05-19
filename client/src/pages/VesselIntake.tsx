@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, VesselManifestPreview, VesselManifestRow } from '../api.js';
+import { api, DuplicateEntry, DuplicateImportError, VesselManifestPreview, VesselManifestRow } from '../api.js';
 import {
   emptyVesselCargoRowForm,
   VesselCargoRowForm,
@@ -55,6 +55,7 @@ function ManualVesselEntry() {
   const [detailSubmitting, setDetailSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [duplicates, setDuplicates] = useState<DuplicateEntry[] | null>(null);
 
   async function handleUnidentifiedSubmit(e: FormEvent) {
     e.preventDefault();
@@ -78,6 +79,7 @@ function ManualVesselEntry() {
     setDetailSubmitting(true);
     setError(null);
     setMessage(null);
+    setDuplicates(null);
     try {
       await api.createDetailedManualVesselCargo({
         vesselName,
@@ -89,7 +91,11 @@ function ManualVesselEntry() {
       setDetailRow(emptyVesselCargoRowForm);
       setMessage('Created vessel cargo entry.');
     } catch (err) {
-      setError((err as Error).message);
+      if (err instanceof DuplicateImportError) {
+        setDuplicates(err.duplicates);
+      } else {
+        setError((err as Error).message);
+      }
     } finally {
       setDetailSubmitting(false);
     }
@@ -99,6 +105,7 @@ function ManualVesselEntry() {
     <div className="space-y-4">
       <div className="app-panel p-6 space-y-5">
         <Status error={error} message={message} />
+        {duplicates && <DuplicateWarning duplicates={duplicates} onDismiss={() => setDuplicates(null)} />}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Vessel Name" required>
             <input className="input" value={vesselName} onChange={(e) => setVesselName(e.target.value)} required />
@@ -155,6 +162,7 @@ function ManifestImport() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [duplicates, setDuplicates] = useState<DuplicateEntry[] | null>(null);
 
   const blGroups = useMemo<BLGroup[]>(() => {
     if (!preview) return [];
@@ -213,6 +221,7 @@ function ManifestImport() {
     setBusy(true);
     setError(null);
     setMessage(null);
+    setDuplicates(null);
     try {
       let imported = 0;
       if (selectedBLGroups.length > 0) {
@@ -236,7 +245,11 @@ function ManifestImport() {
       setPreview(null);
       setRowActions({});
     } catch (err) {
-      setError((err as Error).message);
+      if (err instanceof DuplicateImportError) {
+        setDuplicates(err.duplicates);
+      } else {
+        setError((err as Error).message);
+      }
     } finally {
       setBusy(false);
     }
@@ -270,6 +283,7 @@ function ManifestImport() {
     <div className="space-y-4">
       <div className="app-panel p-6 space-y-4">
         <Status error={error} message={message} />
+        {duplicates && <DuplicateWarning duplicates={duplicates} onDismiss={() => setDuplicates(null)} />}
         <Field label="Manifest File">
           <input
             type="file"
@@ -423,6 +437,29 @@ function ExcludedRows({ rows, onInclude }: { rows: VesselManifestRow[]; onInclud
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function DuplicateWarning({ duplicates, onDismiss }: { duplicates: DuplicateEntry[]; onDismiss: () => void }) {
+  return (
+    <div className="bg-amber-50 border border-amber-300 text-amber-800 rounded p-3 text-sm space-y-2">
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-semibold">
+          {duplicates.length === 1
+            ? '1 entry already exists in the system and was not imported:'
+            : `${duplicates.length} entries already exist in the system and were not imported:`}
+        </p>
+        <button type="button" onClick={onDismiss} className="text-amber-600 hover:text-amber-900 font-bold leading-none shrink-0">✕</button>
+      </div>
+      <ul className="space-y-0.5 pl-1">
+        {duplicates.map((d) => (
+          <li key={d.blNo} className="font-mono text-xs">
+            {d.blNo} — {d.cssCcdNo} — {d.consigneeName}
+          </li>
+        ))}
+      </ul>
+      <p className="text-xs text-amber-700">Change the action to <strong>Skip</strong> for these rows, or search for them in the cargo list.</p>
     </div>
   );
 }

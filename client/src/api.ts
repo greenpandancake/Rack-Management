@@ -183,6 +183,15 @@ export type VesselManifestPreview = {
   excluded: VesselManifestRow[];
 };
 
+export type DuplicateEntry = { blNo: string; cssCcdNo: string; consigneeName: string };
+
+export class DuplicateImportError extends Error {
+  constructor(public readonly duplicates: DuplicateEntry[]) {
+    super('duplicate_manifest_entries');
+    this.name = 'DuplicateImportError';
+  }
+}
+
 async function http<T>(url: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { ...((init?.headers as Record<string, string>) ?? {}) };
   const hasBody = init?.body != null;
@@ -197,6 +206,14 @@ async function http<T>(url: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.text();
+    try {
+      const json = JSON.parse(body);
+      if (json?.error === 'duplicate_manifest_entries' && Array.isArray(json.duplicates)) {
+        throw new DuplicateImportError(json.duplicates as DuplicateEntry[]);
+      }
+    } catch (e) {
+      if (e instanceof DuplicateImportError) throw e;
+    }
     throw new Error(`${res.status} ${body}`);
   }
   return res.json() as Promise<T>;
