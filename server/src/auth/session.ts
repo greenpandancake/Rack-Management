@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
 import { env } from '../env.js';
+import type { UserPermissions } from './permissions.js';
 
 const SQLiteStore = SQLiteStoreFactory(session);
 
@@ -14,6 +15,7 @@ declare module 'express-session' {
       username: string;
       name: string;
       role: 'SUPER_ADMIN' | 'ADMIN' | 'CLERK';
+      permissions: UserPermissions;
     };
   }
 }
