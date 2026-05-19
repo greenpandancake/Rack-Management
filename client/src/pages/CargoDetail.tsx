@@ -10,6 +10,7 @@ import {
   VesselCargoRowFormValue,
 } from '../components/VesselCargoRowForm.js';
 import { companyName } from '../format.js';
+import { usePermission } from '../hooks/usePermission.js';
 
 const ARCHIVED_STATUSES: CargoStatus[] = ['CLEARED', 'IN_CHECKING_AREA', 'DAMAGED'];
 
@@ -26,6 +27,9 @@ export function CargoDetail() {
     enabled: !!id,
   });
   const { data: slots } = useQuery({ queryKey: ['slots'], queryFn: api.slots });
+  const canMoveCargo = usePermission('canMoveCargo');
+  const canChangeCargoStatus = usePermission('canChangeCargoStatus');
+  const canUploadPhotos = usePermission('canUploadPhotos');
   const [slotTarget, setSlotTarget] = useState('');
   const [movePickerOpen, setMovePickerOpen] = useState(false);
   const [movingPortionId, setMovingPortionId] = useState<string | null>(null);
@@ -421,6 +425,7 @@ export function CargoDetail() {
                       <td className="px-3 py-2">{portion.currentSlotId ?? 'Rack slot unassigned'}</td>
                       <td className="px-3 py-2 text-right">
                         <div className="flex justify-end gap-2">
+                          {canMoveCargo && (
                           <button
                             disabled={busy}
                             onClick={() => {
@@ -432,6 +437,7 @@ export function CargoDetail() {
                           >
                             Move
                           </button>
+                          )}
                           <button
                             disabled={busy}
                             onClick={() => handleDeletePortion(portion.id, portion.label)}
@@ -452,6 +458,7 @@ export function CargoDetail() {
             <div className="text-sm text-slate-600 dark:text-slate-400">
               Current slot: <span className="font-semibold text-slate-900 dark:text-slate-100">{cargo.currentSlotId ?? 'Rack slot unassigned'}</span>
             </div>
+            {canMoveCargo && (
             <button
               disabled={busy}
               onClick={() => {
@@ -463,11 +470,13 @@ export function CargoDetail() {
             >
               Move
             </button>
+            )}
           </div>
         )}
 
         <div className="border-t pt-3 space-y-2">
           <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Status actions</div>
+          {canChangeCargoStatus && (
           <div className="flex flex-wrap gap-2">
             <button
               disabled={busy}
@@ -517,6 +526,7 @@ export function CargoDetail() {
               </button>
             )}
           </div>
+          )}
           {statusMsg && <div className="text-xs text-slate-700 dark:text-slate-300">{statusMsg}</div>}
         </div>
 
@@ -558,7 +568,7 @@ export function CargoDetail() {
         )}
       </div>
 
-      {movePickerOpen && (
+      {movePickerOpen && canMoveCargo && (
         <div className="fixed inset-0 z-50 bg-slate-900/45 px-4 py-6">
           <div className="mx-auto flex max-h-full max-w-6xl flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
@@ -611,7 +621,12 @@ export function CargoDetail() {
 
       <div className="app-panel p-6 space-y-3">
         <h3 className="font-bold">Photos</h3>
-        <input type="file" accept="image/*" onChange={handleUpload} disabled={busy} />
+        {canUploadPhotos && (
+          <label className="cursor-pointer inline-flex items-center gap-2 text-sm">
+            <input type="file" accept="image/*" onChange={handleUpload} disabled={busy} />
+            Upload photo
+          </label>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {(cargo.photos ?? []).map((p) => (
             <a key={p.id} href={`/uploads/${p.filePath}`} target="_blank" rel="noreferrer" className="block">
