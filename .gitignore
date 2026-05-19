@@ -32,6 +32,10 @@ Thumbs.db
 .idea/
 
 # Temp/doc files in repo root
-"Warehouse voyage files"/
+Warehouse voyage files/
+Superpower/
 Word Document.html
 Word Document_html_*.png
+*.png
+*.jpg
+*.jpeg
