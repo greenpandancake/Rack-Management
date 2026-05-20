@@ -39,3 +39,6 @@ Word Document_html_*.png
 *.png
 *.jpg
 *.jpeg
+
+# Desktop app docs (not for public repo)
+README-desktop.md

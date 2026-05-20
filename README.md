@@ -1,72 +1,82 @@
 # MPL Smart Rack System
 
-Local-only warehouse management system for Maldives Ports Limited. Tracks cargo from the paper Cargo Shifting Slip into a physical rack grid, with a live web dashboard and a Telegram bot for field workers.
+Warehouse management system for Maldives Ports Limited. Tracks cargo from the paper Cargo Shifting Slip into a physical rack grid, with a live web dashboard and a Telegram bot for field workers.
 
-**Packaged as a single Windows portable .exe.** No external database, no separate installs. SQLite lives in the user profile.
+> For the Windows desktop portable app (.exe), see [README-desktop.md](README-desktop.md).
 
-## Quick start (office PC)
+## Stack
 
-1. Double-click `MPL-Smart-Rack-0.1.0-portable.exe`. A desktop window opens at the dashboard.
-2. To enable the Telegram bot: **File → Edit .env**, paste:
-   ```
-   BOT_TOKEN=123456:ABC...   # from @BotFather
-   GROUP_CHAT_ID=-100123...  # the worker group's chat ID
-   ```
-   Save, then close and reopen the app.
-3. For other office screens: **Help → LAN connection info** shows the URL (e.g. `http://192.168.1.5:4000/`). Allow port 4000 through Windows Firewall once.
+- **Frontend** — React 18 + Vite + TypeScript + TanStack Query + Tailwind (dark mode support)
+- **Backend** — Node.js + Express + Socket.IO
+- **Auth** — express-session with file-based session store; role-based + per-user permission system
+- **Bot** — Telegraf (polls Telegram from the server)
+- **Database** — SQLite (via Prisma)
 
-The DB and uploaded photos live in `%APPDATA%\mpl-smart-rack\data\`. Open via **File → Open data folder**.
+## Using the system
 
-Daily full backups can be sent to a network folder:
+### Web dashboard
 
-1. Open **File → Choose backup folder...**.
-2. Pick a shared/network folder, for example `\\SERVER\RackBackups`.
-3. The app saves that folder in `%APPDATA%\mpl-smart-rack\.env` as `BACKUP_DIR` and immediately creates a full backup.
-4. After that, the app creates one automatic full backup per day while it is running. The default time is `02:00`; change `BACKUP_TIME=02:00` in `.env` if needed.
+1. **CFS Intake** — fill the shifting-slip form (mirrors the paper slip), optionally assign initial rack slot.
+2. **Vessel Intake** — process vessel manifests via bulk file upload or manual entry. Unidentified rows can be matched to cargo later.
+3. **Dashboard** — live rack map. Cells turn red after 30 days; green = occupied; white = empty. Supports dark mode (toggle in the top-right).
+4. **Cleared** — view cargo that has been released, disposed, or moved out of the rack.
+5. **Reports** — generate date-range reports showing slot occupancy, cargo statuses, intake summary, move log, and field reports.
+6. **Cargo detail** — see photos, move history, condition reports. Use *Move* dropdown to relocate, or change status directly.
+7. **Search** — type container/BL/consignee/vessel/CSS in the top-right bar.
+8. **Settings** — manage users and permissions, and edit rack rows/levels/slots. Expansion is always additive (won't drop occupied slots).
 
-Each backup is a dated folder containing a safe SQLite backup (`mpl_rack.db`), uploaded photos (`uploads\`), the app config snapshot (`app.env`), and a small `manifest.json`.
+### Telegram workflow (in the authorized group only)
+
+- `/move <containerNo|cargoId> <slotId>` — relocate cargo. e.g. `/move JXLU6164953 A-2-03`.
+- `/move <fromSlot> <toSlot>` — move whatever is in a slot to another slot. e.g. `/move A-1-06 B-2-01`.
+- `/checking <containerNo|cargoId>` — move cargo to the Checking Area (frees its rack slot).
+- `/cleared <containerNo|cargoId>` — mark cargo as cleared and released (frees its rack slot).
+- `/auction <containerNo|cargoId>` — flag cargo as checked for auction (stays in the rack, shown in amber).
+- `/disposal <containerNo|cargoId>` — mark cargo for disposal.
+- `/damaged <containerNo|cargoId>` — mark cargo as damaged.
+- `/report <containerNo|cargoId> <note>` — log a condition note, then **send a photo within 5 minutes** to attach it.
+- Or send a photo with caption `/report <containerNo> <note>` in one message.
+- `/getinfo <slotId>` — show all cargo details stored in a rack slot. e.g. `/getinfo A-1-06`.
+- `/getid <containerNo|blNo|consigneeName>` — look up cargo and get its WH/MCH ID (returns up to 10 matches).
+- Commands sent in any other chat are silently ignored.
+
+## User roles and permissions
+
+The system has three roles. Each user is assigned one role, and a super-admin can further fine-tune individual permissions.
+
+| Role | Default access |
+|------|---------------|
+| **SUPER_ADMIN** | Full access to everything, including user management and rack configuration |
+| **ADMIN** | All cargo operations; cannot configure rack or manage slots |
+| **CLERK** | Core operations (intake, move, photo upload); no admin or settings access |
+
+### Granular permissions
+
+A SUPER_ADMIN can override any permission for any user via **Settings → Users → Edit permissions**. The 15 available permissions are:
+
+**Pages**: `canViewDashboard`, `canViewIntake`, `canViewVesselIntake`, `canViewCleared`, `canViewReports`, `canViewSettings`
+
+**Cargo operations**: `canMoveCargo`, `canChangeCargoStatus`, `canUploadPhotos`, `canAddFieldReports`
+
+**User management**: `canCreateUsers`, `canEditUsers`, `canResetPasswords`
+
+**Rack management**: `canConfigureRack`, `canManageSlots`
+
+### Linking a user to Telegram
+
+To let a field worker run bot commands, set their **Telegram username** (without `@`) in **Settings → Users → Edit**. The bot checks this against the sender's Telegram account before executing any command.
 
 ## Getting the Telegram group chat ID
 
 1. `@BotFather` → `/newbot` → save the token.
 2. Create a Telegram group, add the bot as an **admin** (so it can read all messages, not just commands directed at it — needed for photo handling).
 3. Send any message in the group, then visit `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser. Copy the `chat.id` value (negative integer).
-4. Paste into the .env file in step 2 above.
-
-## Stack
-
-- **Frontend** — React 18 + Vite + TypeScript + TanStack Query + Tailwind
-- **Backend** — Node.js + Express + Socket.IO (single process, embedded in Electron)
-- **Bot** — Telegraf (polls Telegram from the office PC)
-- **Database** — **SQLite** (via Prisma), single file at `%APPDATA%\mpl-smart-rack\data\mpl_rack.db`
-- **Packaging** — Electron 33 + electron-builder, Windows x64 portable
-
-## Using the system
-
-### Office workflow
-1. **New Intake** — fill the shifting-slip form (mirrors the paper slip), optionally assign initial rack slot.
-2. **Dashboard** — live rack map. Cells turn red after 30 days; green = occupied; white = empty.
-3. **Cargo detail** — see photos, move history, reports. Use *Move* dropdown to relocate from the office.
-4. **Search** — type container/BL/consignee/vessel/CSS in the top-right bar.
-5. **Settings** — edit rack rows/levels/slots. Expansion is always additive (won't drop occupied slots).
-
-### Telegram workflow (in the authorized group only)
-- `/move <containerNo|cargoId> <slotId>` — relocate cargo. e.g. `/move JXLU6164953 A-2-03`.
-- `/checking <containerNo|cargoId>` — move cargo to the Checking Area (frees its rack slot).
-- `/cleared <containerNo|cargoId>` — mark cargo as cleared and released (frees its rack slot).
-- `/auction <containerNo|cargoId>` — flag cargo as checked for auction (stays in the rack, shown in amber).
-- `/report <containerNo|cargoId> <note>` — log a condition note, then **send a photo within 5 minutes** to attach it.
-- Or send a photo with caption `/report <containerNo> <note>` in one message.
-- Commands sent in any other chat are silently ignored.
+4. Paste `BOT_TOKEN` and `GROUP_CHAT_ID` into your `.env`.
 
 ## Project layout
 
 ```
-D:\App Dev 6\
-├── electron/
-│   ├── main.ts          # Electron main: spawns server, opens window, manages userData
-│   ├── tsconfig.json
-│   └── dist/            # compiled main.js
+mpl-smart-rack/
 ├── server/
 │   ├── prisma/
 │   │   ├── schema.prisma     # SQLite models
@@ -82,70 +92,14 @@ D:\App Dev 6\
 │   │   ├── db.ts
 │   │   └── env.ts            # zod-validated env
 │   └── dist/                 # compiled server JS
-├── client/
-│   ├── src/                  # React app
-│   └── dist/                 # built SPA
-├── package.json              # Electron app + build config
-└── release/                  # built .exe lives here
+└── client/
+    ├── src/                  # React app
+    └── dist/                 # built SPA
 ```
 
-## Building from source
-
-Requirements on the build machine (the one creating the .exe):
-- Node.js 20+ (works with 25)
-- Windows (or cross-compile from Linux/macOS with `--win`)
-- Internet, first time only (electron-builder downloads ~150 MB of Electron binaries; cached after that)
-
-```
-# from D:\App Dev 6
-npm install                              # installs Electron + native build tools
-npx electron-builder install-app-deps    # rebuilds better-sqlite3 against Electron's Node ABI
-
-cd server && npm install && npx prisma generate && cd ..
-cd client && npm install && cd ..
-
-npm run dist                             # produces release/MPL-Smart-Rack-0.1.0-portable.exe
-```
-
-Build steps inside `npm run dist`:
-1. `build:schema-sql` — `prisma migrate diff` generates `server/prisma/init.sql`. The Electron main applies this once on first launch to create the SQLite tables.
-2. `build:server` — `tsc` compiles `server/src/**/*.ts` → `server/dist/`.
-3. `build:client` — `vite build` compiles the React app → `client/dist/`.
-4. `build:electron` — `tsc` compiles `electron/main.ts` → `electron/dist/main.js`.
-5. `electron-builder --win portable` — bundles everything into one .exe.
-
-To build an installer instead of a portable: `npm run dist:installer`.
-
-## How the .exe boots
-
-1. Electron starts → reads `app.getPath('userData')` (= `%APPDATA%\mpl-smart-rack\`).
-2. Creates `data/` and `uploads/` if missing.
-3. Creates `.env` template if missing.
-4. Loads `.env` into `process.env`.
-5. Opens (or creates + applies `init.sql` to) `data/mpl_rack.db`.
-6. Sets `DATABASE_URL=file:<...>/mpl_rack.db`, `UPLOADS_DIR=<...>/uploads`, `HOST=0.0.0.0`, `PORT=4000`.
-7. Dynamically imports `server/dist/index.js` — server starts in the same process as Electron main.
-8. Waits for `/api/health` to return OK, then opens a BrowserWindow loading `http://127.0.0.1:4000/`.
-9. Starts the daily backup scheduler if `BACKUP_DIR` is configured.
-10. The Express server serves the built React SPA from `client/dist/`.
-
-Other office PCs hit `http://<office-pc-ip>:4000/` in any browser — they get the same dashboard with live updates over Socket.IO.
-
-## Docker and Linux server deployment
-
-The Windows `.exe` is only one way to run MPL Smart Rack. Internally, the app is a normal Node.js web server that serves:
-
-- the REST API from `server/dist/`
-- the Socket.IO live updates from the same server
-- the built React dashboard from `client/dist/`
-- uploaded photos from `UPLOADS_DIR`
-- the SQLite database from `DATABASE_URL`
-
-For Docker or a Linux server, **do not run Electron**. Electron is only the desktop wrapper used by the Windows portable app. On a server, run `server/dist/index.js` directly and point it at a persistent data folder.
+## Deployment
 
 ### Production architecture
-
-Recommended server layout:
 
 ```
 Browser clients / office PCs
@@ -169,20 +123,9 @@ Persistent data folder
         +-- sessions/
 ```
 
-Example production data folder:
-
-```
-/opt/mpl-smart-rack/data/
-├── mpl_rack.db
-├── uploads/
-└── sessions/
-```
-
 ### Required environment variables
 
-The server reads environment variables from the process environment, or from a `.env` file in the current working directory.
-
-For Linux or Docker, use values like these:
+The server reads from the process environment or a `.env` file in the current working directory.
 
 ```env
 NODE_ENV=production
@@ -198,7 +141,7 @@ UPLOADS_DIR=/opt/mpl-smart-rack/data/uploads
 # Browser session files. Keep this in a persistent folder.
 SESSION_DIR=/opt/mpl-smart-rack/data/sessions
 
-# Built React app. This must point to client/dist after npm run build:client.
+# Built React app. Must point to client/dist after build.
 CLIENT_DIST=/opt/mpl-smart-rack/app/client/dist
 
 # Use a long random value in production.
@@ -217,25 +160,14 @@ openssl rand -hex 32
 
 ### Important SQLite rule
 
-This app uses SQLite, so run **one server process** against one database file.
+Run **one server process** against one database file.
 
-Good:
-
-- one Windows office PC running the `.exe`
 - one Linux server running Node.js
 - one Docker container with a persistent volume
 
-Avoid:
+Avoid multiple processes or containers writing to the same SQLite file, or sharing it over a network filesystem. If horizontal scaling is ever needed, migrate to PostgreSQL first.
 
-- multiple containers writing to the same SQLite file
-- multiple Linux servers sharing the same database over a network filesystem
-- horizontal scaling behind a load balancer
-
-If the app ever needs multiple active server instances, migrate the database from SQLite to PostgreSQL first.
-
-### Option A: Deploy on a Linux server with PM2
-
-This is a good choice for a small office server or VM.
+### Option A: Linux server with PM2
 
 #### 1. Install Node.js and system tools
 
@@ -246,18 +178,9 @@ sudo apt update
 sudo apt install -y nodejs npm git nginx
 ```
 
-Node.js 20+ is recommended. Check the installed version:
-
-```bash
-node --version
-npm --version
-```
-
-If the system package gives an older Node version, install Node.js 20 from NodeSource or your preferred Node version manager.
+Node.js 20+ is recommended. If the system package is older, install from NodeSource or a Node version manager.
 
 #### 2. Put the app on the server
-
-Example path:
 
 ```bash
 sudo mkdir -p /opt/mpl-smart-rack
@@ -267,13 +190,7 @@ git clone <your-repo-url> app
 cd app
 ```
 
-If you are copying the project manually instead of using Git, copy the project folder to:
-
-```text
-/opt/mpl-smart-rack/app
-```
-
-Do not copy local `node_modules` from Windows to Linux. Install dependencies fresh on the Linux server.
+Do not copy `node_modules` from Windows to Linux — install fresh on the server.
 
 #### 3. Create persistent data folders
 
@@ -282,15 +199,7 @@ mkdir -p /opt/mpl-smart-rack/data/uploads
 mkdir -p /opt/mpl-smart-rack/data/sessions
 ```
 
-#### 4. Create the server `.env`
-
-Create:
-
-```text
-/opt/mpl-smart-rack/app/server/.env
-```
-
-Example:
+#### 4. Create `server/.env`
 
 ```env
 NODE_ENV=production
@@ -305,14 +214,11 @@ BOT_TOKEN=
 GROUP_CHAT_ID=
 ```
 
-If enabling the Telegram bot, fill in `BOT_TOKEN` and `GROUP_CHAT_ID`.
-
 #### 5. Install dependencies and build
 
 From `/opt/mpl-smart-rack/app`:
 
 ```bash
-npm install
 cd server && npm install && npx prisma generate && cd ..
 cd client && npm install && cd ..
 
@@ -320,9 +226,7 @@ npm run build:server
 npm run build:client
 ```
 
-The Linux server does not need `npm run build:electron` or `npm run dist`.
-
-#### 6. Initialize or update the database schema
+#### 6. Initialize the database schema
 
 From `/opt/mpl-smart-rack/app/server`:
 
@@ -330,92 +234,48 @@ From `/opt/mpl-smart-rack/app/server`:
 npx prisma db push
 ```
 
-This creates or updates:
-
-```text
-/opt/mpl-smart-rack/data/mpl_rack.db
-```
-
-#### 7. Smoke test the server
-
-From `/opt/mpl-smart-rack/app/server`:
+#### 7. Smoke test
 
 ```bash
 npm run start
 ```
 
-Then open:
-
-```text
-http://server-ip:4000/api/health
-```
-
-Expected response:
+Open `http://server-ip:4000/api/health`. Expected:
 
 ```json
-{
-  "ok": true,
-  "botEnabled": false,
-  "isLocal": false
-}
+{ "ok": true, "botEnabled": false, "isLocal": false }
 ```
 
-Stop the test server with `Ctrl+C`.
+Stop with `Ctrl+C`.
 
 #### 8. Run permanently with PM2
 
-Install PM2:
-
 ```bash
 sudo npm install -g pm2
-```
-
-The repo already includes `ecosystem.config.js`. It starts the server from `server/dist/index.js`.
-
-From `/opt/mpl-smart-rack/app`:
-
-```bash
 pm2 start ecosystem.config.js
 pm2 save
 pm2 startup
 ```
 
-PM2 will print one extra command for your server. Run that printed command with `sudo` so PM2 restarts automatically after reboot.
-
-Useful PM2 commands:
+Run the extra command PM2 prints with `sudo` so it survives reboots.
 
 ```bash
 pm2 status
 pm2 logs mpl-rack-server
 pm2 restart mpl-rack-server
-pm2 stop mpl-rack-server
 ```
 
 #### 9. Open firewall
-
-If using UFW:
 
 ```bash
 sudo ufw allow 4000/tcp
 ```
 
-Office users can then open:
-
-```text
-http://server-ip:4000
-```
-
 ### Optional Nginx reverse proxy
 
-You can expose the app through Nginx on port 80 instead of asking users to type `:4000`.
+Expose the app on port 80 instead of `:4000`.
 
-Create:
-
-```text
-/etc/nginx/sites-available/mpl-smart-rack
-```
-
-Example:
+Create `/etc/nginx/sites-available/mpl-smart-rack`:
 
 ```nginx
 server {
@@ -446,27 +306,15 @@ server {
 }
 ```
 
-Enable it:
-
 ```bash
 sudo ln -s /etc/nginx/sites-available/mpl-smart-rack /etc/nginx/sites-enabled/mpl-smart-rack
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Then users can open:
-
-```text
-http://server-ip
-```
-
-### Option B: Deploy with Docker
-
-Docker is the cleanest deployment option if you want the app and its Node.js runtime packaged together.
+### Option B: Docker
 
 #### 1. Add a `.dockerignore`
-
-Create `.dockerignore` in the project root:
 
 ```dockerignore
 node_modules
@@ -481,8 +329,6 @@ release
 ```
 
 #### 2. Add a `Dockerfile`
-
-Create `Dockerfile` in the project root:
 
 ```dockerfile
 FROM node:20-bookworm-slim AS build
@@ -527,18 +373,7 @@ EXPOSE 4000
 CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
 ```
 
-This image:
-
-- installs dependencies inside Linux, so native packages are built correctly
-- builds the backend TypeScript
-- builds the React frontend
-- serves the frontend through Express using `CLIENT_DIST`
-- stores the SQLite DB and uploads under `/data`
-- runs `prisma db push` at startup so a fresh volume gets the required tables
-
 #### 3. Add `docker-compose.yml`
-
-Create `docker-compose.yml` in the project root:
 
 ```yaml
 services:
@@ -570,60 +405,31 @@ volumes:
 
 ```bash
 docker compose up -d --build
-```
-
-Check logs:
-
-```bash
 docker compose logs -f
 ```
 
-Open:
+Health check: `http://server-ip:4000/api/health`
 
-```text
-http://server-ip:4000
-```
-
-Health check:
-
-```text
-http://server-ip:4000/api/health
-```
-
-#### 5. Stop, restart, and update
-
-Stop:
-
-```bash
-docker compose down
-```
-
-Restart:
-
-```bash
-docker compose up -d
-```
-
-Update after pulling new code:
+#### 5. Update after code changes
 
 ```bash
 git pull
 docker compose up -d --build
 ```
 
-The named Docker volume `mpl_data` keeps the database, uploads, and sessions between rebuilds.
+The named volume `mpl_data` keeps the database, uploads, and sessions between rebuilds.
 
-### Backups on Linux or Docker
+### Backups
 
 Back up the persistent data folder, not just the source code.
 
-For a Linux server deployment:
+Linux server:
 
 ```bash
 sudo rsync -a /opt/mpl-smart-rack/data/ /backup/mpl-smart-rack/
 ```
 
-For Docker, back up the named volume by copying from a temporary container:
+Docker volume:
 
 ```bash
 docker run --rm \
@@ -633,40 +439,22 @@ docker run --rm \
   tar -czf /backup/mpl-smart-rack-data.tar.gz -C /data .
 ```
 
-To restore a Docker volume:
+For best results, stop the app before a full SQLite backup (`docker compose down`), then bring it back up after.
+
+### Troubleshooting
+
+- **Page loads but API calls fail** — confirm `CLIENT_DIST` points to `client/dist` and the server is on the same origin.
+- **Database empty after restart** — SQLite file is not in a persistent folder/volume. Check `DATABASE_URL`.
+- **Photos disappear after restart** — `UPLOADS_DIR` is not persistent.
+- **Login/session resets often** — set `SESSION_SECRET` and keep `SESSION_DIR` persistent.
+- **Socket.IO updates don't work behind Nginx** — ensure the `/socket.io/` location has `Upgrade` and `Connection "upgrade"` headers.
+- **Telegram bot doesn't respond** — confirm `BOT_TOKEN`, `GROUP_CHAT_ID`, and that the bot is admin in the group.
+- **Container fails on startup** — rebuild with `docker compose build --no-cache` and check `docker compose logs -f`.
+- **Prisma can't open the database** — check write permissions on the data directory and that `DATABASE_URL` starts with `file:`.
+
+## Development
 
 ```bash
-docker compose down
-docker run --rm \
-  -v mpl-smart-rack_mpl_data:/data \
-  -v "$PWD/backups":/backup \
-  node:20-bookworm-slim \
-  sh -c "cd /data && tar -xzf /backup/mpl-smart-rack-data.tar.gz"
-docker compose up -d
-```
-
-For best results, stop the app before taking a full SQLite backup:
-
-```bash
-docker compose down
-# run the backup command
-docker compose up -d
-```
-
-### Troubleshooting server deployments
-
-- **The page loads but API calls fail**: confirm `CLIENT_DIST` points to the real `client/dist` folder and that the server is serving the same origin as the browser app.
-- **Database is empty after restart**: the SQLite file is not in a persistent folder or Docker volume. Check `DATABASE_URL`.
-- **Photos disappear after restart**: `UPLOADS_DIR` is not persistent. It should live under `/data/uploads` or `/opt/mpl-smart-rack/data/uploads`.
-- **Login/session resets often**: set `SESSION_SECRET` and keep `SESSION_DIR` persistent.
-- **Socket.IO live updates do not work behind Nginx**: make sure the `/socket.io/` Nginx location includes `Upgrade` and `Connection "upgrade"` headers.
-- **Telegram bot does not respond**: confirm `BOT_TOKEN`, `GROUP_CHAT_ID`, and that the bot is an admin in the Telegram group.
-- **Container fails during install or startup**: rebuild with `docker compose build --no-cache` and check `docker compose logs -f`.
-- **Prisma cannot open the database**: check that the process can write to the data directory and that `DATABASE_URL` starts with `file:`.
-
-## Development (without packaging)
-
-```
 # terminal 1 — server
 cd server && npm run dev
 
@@ -677,13 +465,3 @@ cd client && npm run dev
 Open `http://localhost:5173`. Vite proxies API and Socket.IO to `localhost:4000`.
 
 For Telegram bot in dev: copy `server/.env.example` → `server/.env` and fill in `BOT_TOKEN` + `GROUP_CHAT_ID`.
-
-## Troubleshooting
-
-- **Bot silently ignores commands** — `GROUP_CHAT_ID` is wrong, or the bot isn't an admin in that group.
-- **Dashboard doesn't update live** — DevTools (`View → Toggle DevTools`) → Network tab → check `/socket.io` WS connection.
-- **Other PCs can't load `http://<ip>:4000`** — Windows Firewall blocks port 4000. Allow inbound in *Windows Defender Firewall → Inbound Rules*.
-- **App fails to start** — error dialog shows the cause. Common: corrupted DB. Delete `%APPDATA%\mpl-smart-rack\data\mpl_rack.db` to start fresh (loses all cargo data).
-- **Photos don't appear** — check `%APPDATA%\mpl-smart-rack\data\uploads\`. They should be there. If not, check disk free space.
-- **Aging didn't run** — restart the app. The cron runs once on boot then hourly.
-- **Backups are not appearing** — keep the app open on the office PC, confirm `BACKUP_DIR` points to a reachable network folder, and use **File → Run backup now** to test write access.
