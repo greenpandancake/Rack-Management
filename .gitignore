@@ -30,6 +30,7 @@ server/uploads/
 Thumbs.db
 .vscode/
 .idea/
+.claude/
 
 # Temp/doc files in repo root
 Warehouse voyage files/
