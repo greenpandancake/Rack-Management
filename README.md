@@ -1,6 +1,6 @@
-# MPL Smart Rack System
+# Smart Rack System
 
-Warehouse management system for Maldives Ports Limited. Tracks cargo from the paper Cargo Shifting Slip into a physical rack grid, with a live web dashboard and a Telegram bot for field workers.
+Warehouse management system for tracking cargo from the paper Cargo Shifting Slip into a physical rack grid, with a live web dashboard and a Telegram bot for field workers.
 
 > For the Windows desktop portable app (.exe), see [README-desktop.md](README-desktop.md).
 
@@ -76,7 +76,7 @@ To let a field worker run bot commands, set their **Telegram username** (without
 ## Project layout
 
 ```
-mpl-smart-rack/
+smart-rack/
 ├── server/
 │   ├── prisma/
 │   │   ├── schema.prisma     # SQLite models
@@ -118,7 +118,7 @@ Node.js Express + Socket.IO server
         |
         v
 Persistent data folder
-        +-- mpl_rack.db
+        +-- rack.db
         +-- uploads/
         +-- sessions/
 ```
@@ -133,16 +133,16 @@ HOST=0.0.0.0
 PORT=4000
 
 # SQLite database file. Keep this in a persistent folder.
-DATABASE_URL=file:/opt/mpl-smart-rack/data/mpl_rack.db
+DATABASE_URL=file:/opt/smart-rack/data/rack.db
 
 # Uploaded photos. Keep this in a persistent folder.
-UPLOADS_DIR=/opt/mpl-smart-rack/data/uploads
+UPLOADS_DIR=/opt/smart-rack/data/uploads
 
 # Browser session files. Keep this in a persistent folder.
-SESSION_DIR=/opt/mpl-smart-rack/data/sessions
+SESSION_DIR=/opt/smart-rack/data/sessions
 
 # Built React app. Must point to client/dist after build.
-CLIENT_DIST=/opt/mpl-smart-rack/app/client/dist
+CLIENT_DIST=/opt/smart-rack/app/client/dist
 
 # Use a long random value in production.
 SESSION_SECRET=replace-with-a-long-random-secret
@@ -183,9 +183,9 @@ Node.js 20+ is recommended. If the system package is older, install from NodeSou
 #### 2. Put the app on the server
 
 ```bash
-sudo mkdir -p /opt/mpl-smart-rack
-sudo chown -R "$USER":"$USER" /opt/mpl-smart-rack
-cd /opt/mpl-smart-rack
+sudo mkdir -p /opt/smart-rack
+sudo chown -R "$USER":"$USER" /opt/smart-rack
+cd /opt/smart-rack
 git clone <your-repo-url> app
 cd app
 ```
@@ -195,8 +195,8 @@ Do not copy `node_modules` from Windows to Linux — install fresh on the server
 #### 3. Create persistent data folders
 
 ```bash
-mkdir -p /opt/mpl-smart-rack/data/uploads
-mkdir -p /opt/mpl-smart-rack/data/sessions
+mkdir -p /opt/smart-rack/data/uploads
+mkdir -p /opt/smart-rack/data/sessions
 ```
 
 #### 4. Create `server/.env`
@@ -205,10 +205,10 @@ mkdir -p /opt/mpl-smart-rack/data/sessions
 NODE_ENV=production
 HOST=0.0.0.0
 PORT=4000
-DATABASE_URL=file:/opt/mpl-smart-rack/data/mpl_rack.db
-UPLOADS_DIR=/opt/mpl-smart-rack/data/uploads
-SESSION_DIR=/opt/mpl-smart-rack/data/sessions
-CLIENT_DIST=/opt/mpl-smart-rack/app/client/dist
+DATABASE_URL=file:/opt/smart-rack/data/rack.db
+UPLOADS_DIR=/opt/smart-rack/data/uploads
+SESSION_DIR=/opt/smart-rack/data/sessions
+CLIENT_DIST=/opt/smart-rack/app/client/dist
 SESSION_SECRET=replace-with-a-long-random-secret
 BOT_TOKEN=
 GROUP_CHAT_ID=
@@ -216,7 +216,7 @@ GROUP_CHAT_ID=
 
 #### 5. Install dependencies and build
 
-From `/opt/mpl-smart-rack/app`:
+From `/opt/smart-rack/app`:
 
 ```bash
 cd server && npm install && npx prisma generate && cd ..
@@ -228,7 +228,7 @@ npm run build:client
 
 #### 6. Initialize the database schema
 
-From `/opt/mpl-smart-rack/app/server`:
+From `/opt/smart-rack/app/server`:
 
 ```bash
 npx prisma db push
@@ -261,8 +261,8 @@ Run the extra command PM2 prints with `sudo` so it survives reboots.
 
 ```bash
 pm2 status
-pm2 logs mpl-rack-server
-pm2 restart mpl-rack-server
+pm2 logs rack-server
+pm2 restart rack-server
 ```
 
 #### 9. Open firewall
@@ -275,7 +275,7 @@ sudo ufw allow 4000/tcp
 
 Expose the app on port 80 instead of `:4000`.
 
-Create `/etc/nginx/sites-available/mpl-smart-rack`:
+Create `/etc/nginx/sites-available/smart-rack`:
 
 ```nginx
 server {
@@ -307,7 +307,7 @@ server {
 ```
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/mpl-smart-rack /etc/nginx/sites-enabled/mpl-smart-rack
+sudo ln -s /etc/nginx/sites-available/smart-rack /etc/nginx/sites-enabled/smart-rack
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -356,7 +356,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=4000
-ENV DATABASE_URL=file:/data/mpl_rack.db
+ENV DATABASE_URL=file:/data/rack.db
 ENV UPLOADS_DIR=/data/uploads
 ENV SESSION_DIR=/data/sessions
 ENV CLIENT_DIST=/app/client/dist
@@ -377,9 +377,9 @@ CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
 
 ```yaml
 services:
-  mpl-smart-rack:
+  smart-rack:
     build: .
-    container_name: mpl-smart-rack
+    container_name: smart-rack
     restart: unless-stopped
     ports:
       - "4000:4000"
@@ -387,7 +387,7 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 4000
-      DATABASE_URL: file:/data/mpl_rack.db
+      DATABASE_URL: file:/data/rack.db
       UPLOADS_DIR: /data/uploads
       SESSION_DIR: /data/sessions
       CLIENT_DIST: /app/client/dist
@@ -395,10 +395,10 @@ services:
       BOT_TOKEN: ""
       GROUP_CHAT_ID: ""
     volumes:
-      - mpl_data:/data
+      - rack_data:/data
 
 volumes:
-  mpl_data:
+  rack_data:
 ```
 
 #### 4. Build and start
@@ -417,7 +417,7 @@ git pull
 docker compose up -d --build
 ```
 
-The named volume `mpl_data` keeps the database, uploads, and sessions between rebuilds.
+The named volume `rack_data` keeps the database, uploads, and sessions between rebuilds.
 
 ### Backups
 
@@ -426,17 +426,17 @@ Back up the persistent data folder, not just the source code.
 Linux server:
 
 ```bash
-sudo rsync -a /opt/mpl-smart-rack/data/ /backup/mpl-smart-rack/
+sudo rsync -a /opt/smart-rack/data/ /backup/smart-rack/
 ```
 
 Docker volume:
 
 ```bash
 docker run --rm \
-  -v mpl-smart-rack_mpl_data:/data \
+  -v smart-rack_rack_data:/data \
   -v "$PWD/backups":/backup \
   node:20-bookworm-slim \
-  tar -czf /backup/mpl-smart-rack-data.tar.gz -C /data .
+  tar -czf /backup/smart-rack-data.tar.gz -C /data .
 ```
 
 For best results, stop the app before a full SQLite backup (`docker compose down`), then bring it back up after.
